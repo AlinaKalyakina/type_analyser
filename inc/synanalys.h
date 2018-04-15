@@ -8,16 +8,16 @@ enum class Operation{PLUS, MUL, INDEX};
 class SynAnalyser
 {
     LexIt begin, end;
-    Lex lex;
-    AnalysisTree tree;
-    node_ptr S();
-    node_ptr A();
-    node_ptr B();
-    node_ptr C();
-    Lex next_lex();
+    const_lex_ptr lex;
+    const_tree tree;
+    const_node_ptr S();
+    const_node_ptr A();
+    const_node_ptr B();
+    const_node_ptr C();
+    const_lex_ptr next_lex();
 public:
     SynAnalyser(LexSeq);
-    AnalysisTree analyse();
+    const_tree analyse();
 };
 
 #endif // SYNANALYS_H

@@ -2,87 +2,96 @@
 #include <iostream>
 #include "typedetector.h"
 
-Node::Node(node_ptr ch1, node_ptr ch2, node_ptr ch3, Lex l, string t) {
-    children[0] = ch1;
-    children[1] = ch2;
-    children[2] = ch3;
-    lex = l;
-    type = t;
-}
-
-Node::Node(const Node& x) {
-    children[0] = std::make_shared<Node>(Node(*x.children));
-}
-
-const node_ptr *Node::get_children() const{
-    return children;
-}
+//NODE
+Node::Node(string t) : type(t) {}
 
 string Node::get_type() const{
     return type;
 }
 
-string Node::get_look() const {
-    auto type = lex.get_type();
-    if (type == LexType::PLUS || type == LexType::MUL) {
-        return " " + lex.get_look() + " ";
-    }
-    return lex.get_look();
+Node::~Node() {}
+
+//Inner_node
+Inner_node::Inner_node(string type, const_node_ptr ch1,
+                       const_node_ptr ch2, const_node_ptr ch3) : Node(type){
+    children[0] = ch1;
+    children[1] = ch2;
+    children[2] = ch3;
 }
 
-pos_type Node::get_pos() const {
-    if (children[0] != nullptr) {
-        return children[0]->get_pos();
-    } else {
-        return lex.get_pos();
-    }
+const const_node_ptr* Inner_node::get_children() const {
+    return children;
 }
 
-node_ptr AnalysisTree::create_node(string type, Lex l) {
-    return std::make_shared<Node>(nullptr, nullptr, nullptr, l, type);
+pos_type Inner_node::get_pos() const {
+    return children[0]->get_pos();
 }
 
-node_ptr AnalysisTree::create_node(string s, node_ptr ch1, node_ptr ch2, node_ptr ch3) {
-    return std::make_shared<Node>(ch1, ch2, ch3, EMPTY_LEX,s);
-}
-
-string AnalysisTree::write_expression() const {
+string Inner_node::get_look() const {
     string res = "";
-    ::write_expression(peak, res);
+    for (int i = 0; i < 3; i++) {
+        if (children[i] != nullptr) {
+            res += children[i]->get_look();
+        } else {
+            break;
+        }
+    }
     return res;
 }
 
-void AnalysisTree::write_subexpressions() const {
-    if (peak == nullptr) {
-        std::cout << "Empty expression" << std::endl;
-    }
-    ::write_subexpressions(peak);
-}
-
-void write_subexpressions(node_ptr peak)  {
-    if (peak != nullptr) {
-        auto chld = peak->get_children();
-        write_subexpressions(chld[0]);
-        write_subexpressions(chld[1]);
-        write_subexpressions(chld[2]);
-        auto type = TypeDetector::say_type(peak->get_type());
-        if (type != "") {
-            string expression;
-            write_expression(peak, expression);
-            std::cout << expression << " : " << type << std::endl;
-        }
-    }
-}
-
-void write_expression(node_ptr peak, string& str) {
-    if (peak != nullptr) {
-        auto chld = peak->get_children();
-        if (chld[0] == nullptr) {
-            str += peak->get_look();
+void Inner_node::write_subexpressions() const {
+    for (int i = 0; i < 3; i++) {
+        if (children[i] != nullptr) {
+            children[i]->write_subexpressions();
         } else {
-            write_expression(chld[0], str);
-            write_expression(chld[1], str);
-            write_expression(chld[2], str);
+            break;
         }
+    }
+    if (this->get_type() != NO_TYPE) {
+        std::cout << this->get_look() << " : " <<
+                    TypeDetector::say_type(this->get_type()) << std::endl;
+    }
+}
+
+//Leaf
+Leaf::Leaf(const_lex_ptr l) : Node(TypeDetector::type_of_lex(l)) {
+    lex = l;
+}
+
+const const_node_ptr* Leaf::get_children() const{
+    return nullptr;
+}
+
+pos_type Leaf::get_pos() const {
+    return lex->get_pos();
+}
+
+string Leaf::get_look() const {
+    auto type = lex->get_type();
+    if (type == LexType::PLUS || type == LexType::MUL) {
+        return " " + lex->get_look() + " ";
+    }
+    return lex->get_look();
+}
+
+void Leaf::write_subexpressions() const {
+    if (*lex == LexType::ID || *lex == LexType::NUM) {
+        std::cout << this->get_look() << " : " << TypeDetector::say_type(this->get_type()) << std::endl;
+    }
+}
+
+const_node_ptr create_node(const_lex_ptr lex) {
+    return std::make_shared<Leaf>(lex);
+}
+
+const_node_ptr create_node(const string& type, const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3) {
+    return std::make_shared<Inner_node>(type, ch1, ch2, ch3);
+}
+
+void write_subexpressions(const_node_ptr peak) {
+    if (peak) {
+        peak->write_subexpressions();
+    } else {
+        std::cout << "No any subexpressions";
     }
 }

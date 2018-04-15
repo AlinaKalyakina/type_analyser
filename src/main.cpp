@@ -10,11 +10,11 @@ int main()
         try{
             LexSeq seq;
             SynAnalyser x(seq);
-            AnalysisTree tree = x.analyse();
-            std::cout << std::endl << "Subexpressions:" << std::endl;
-            tree.write_subexpressions();
+            const_tree tree = x.analyse();
+            std::cout << std::endl << "Subexpressions in " << tree->get_look() << " have types: " << std::endl;
+            write_subexpressions(tree);
         }
-        catch(Error& er) {std::cerr << std::endl <<er.what() << std::endl;}
+        catch(const Error& er) {std::cerr << std::endl <<er.what() << std::endl;}
         catch(...) { puts("\n!!!");}
 //        std::cin.clear();
 //    }

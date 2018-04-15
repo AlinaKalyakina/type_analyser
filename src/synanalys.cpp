@@ -10,73 +10,71 @@ SynAnalyser::SynAnalyser(LexSeq seq) {
     lex = *begin;
 }
 
-Lex SynAnalyser::next_lex() {
+const_lex_ptr SynAnalyser::next_lex() {
     ++begin;
     lex = *begin;
     return lex;
 }
 
 
-node_ptr  SynAnalyser::S() {//PLUS
-    node_ptr chld1 = A();
-    while (lex == LexType::PLUS) {
-        node_ptr chld2 = AnalysisTree::create_node(TypeDetector::get_type(lex), lex);//PLUS
+const_node_ptr SynAnalyser::S() {//PLUS
+    const_node_ptr chld1 = A();
+    while (*lex == LexType::PLUS) {
+        const_node_ptr chld2 = create_node(lex);//PLUS
         next_lex();
-        node_ptr chld3 = A();
-        chld1 = AnalysisTree::create_node(TypeDetector::op_check_and_res
+        const_node_ptr chld3 = A();
+        chld1 = create_node(TypeDetector::op_check_and_res
                   (Operation::PLUS, chld1, chld2, chld3), chld1, chld2, chld3);
     }
     return chld1;
 }
 
 
-node_ptr  SynAnalyser::A() {//MUL
-    node_ptr chld1 = B();
-    while (lex == LexType::MUL) {
-        node_ptr chld2 = AnalysisTree::create_node(TypeDetector::get_type(lex), lex);
+const_node_ptr SynAnalyser::A() {//MUL
+    const_node_ptr chld1 = B();
+    while (*lex == LexType::MUL) {
+        const_node_ptr chld2 = create_node(lex);
         next_lex();
-        node_ptr chld3 = B();
-        chld1 = AnalysisTree::create_node(TypeDetector::op_check_and_res(Operation::MUL,
+        const_node_ptr chld3 = B();
+        chld1 = create_node(TypeDetector::op_check_and_res(Operation::MUL,
                                       chld1, chld2, chld3), chld1, chld2, chld3);
     }
     return chld1;
 }
 
-node_ptr  SynAnalyser::B() {//LPAREN
-    if (lex == LexType::LPAREN) {
-        node_ptr chld1 = AnalysisTree::create_node(TypeDetector::get_type(lex), lex);
+const_node_ptr SynAnalyser::B() {//LPAREN
+    if (*lex == LexType::LPAREN) {
+        const_node_ptr chld1 = create_node(lex);
         next_lex();
-        node_ptr chld2 = S();
-        if (lex == LexType::RPAREN) {
-            chld1 = AnalysisTree::create_node(chld2->get_type(), chld1, chld2,
-                               AnalysisTree::create_node(TypeDetector::get_type(lex), lex));
+        const_node_ptr chld2 = S();
+        if (*lex == LexType::RPAREN) {
+            chld1 = create_node(chld2->get_type(), chld1, chld2, create_node(lex));
             next_lex();
             return chld1;
         } else {
-            throw SynError(Syn_err::UNDEXP, lex, Lex(") ", lex.get_pos()));;//EXCEPTION
+            throw SynError(Syn_err::UNDEXP, lex, create_lex(LexType::RPAREN));//EXCEPTION
         }
     } else {
         return C();
     }
 }
 
-node_ptr  SynAnalyser::C() { // SQBLANCK OR NUM
-    node_ptr chld1, chld2, chld3;
-    switch (lex.get_type()) {
+const_node_ptr  SynAnalyser::C() { // SQBLANCK OR ID
+    const_node_ptr chld1, chld2, chld3;
+    switch (lex->get_type()) {
         case (LexType::NUM):
         case (LexType::ID):
-            chld1 = AnalysisTree::create_node(TypeDetector::get_type(lex), lex);
-            while (next_lex() == LexType::LSQBRACKET) {
-                chld2 = AnalysisTree::create_node(TypeDetector::get_type(lex), lex);
+            chld1 = create_node(lex);
+            while (*next_lex() == LexType::LSQBRACKET) {
+                chld2 = create_node(lex);
                 next_lex();
                 chld3 = S();
-                if (lex == LexType::RSQBEACKET) {
-                    chld2 = AnalysisTree::create_node(TypeDetector::get_type(lex),chld2, chld3,
-                                AnalysisTree::create_node(TypeDetector::get_type(lex), lex));
+                if (*lex == LexType::RSQBEACKET) {
+                    chld2 = create_node(NO_TYPE,chld2, chld3, create_node(lex));
                 } else {
-                    throw SynError(Syn_err::UNDEXP, lex, Lex("] ", lex.get_pos()));
+                    throw SynError(Syn_err::UNDEXP, lex, create_lex(LexType::RSQBEACKET));
                 }
-                chld1 = AnalysisTree::create_node(TypeDetector::op_check_and_res (Operation::INDEX, chld1, chld2), chld1, chld2);
+                chld1 = create_node(TypeDetector::op_check_and_res (Operation::INDEX, chld1, chld2), chld1, chld2);
             }
             return chld1;
     default:
@@ -85,13 +83,13 @@ node_ptr  SynAnalyser::C() { // SQBLANCK OR NUM
 }
 
 
-AnalysisTree SynAnalyser::analyse () {
-    node_ptr peak = nullptr;
+const_tree SynAnalyser::analyse() {
+    const_node_ptr peak = nullptr;
     if(begin != end) {
         peak = S();
     }
     if (begin != end) {
         throw SynError(Syn_err::EXTRA_LEX, lex); //EXCEPTION
     }
-    return AnalysisTree(peak);
+    return peak;
 }

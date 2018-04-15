@@ -2,7 +2,6 @@
 #define ANALYSISTREE_H
 #include <memory>
 
-enum class Expresion_output { SUBEXPR,  };
 
 #include "lexseq.h"
 #include <string>
@@ -11,36 +10,43 @@ using std::string;
 using std::vector;
 
 class Node {
-    std::shared_ptr<Node> children[3];
-    Lex lex;
     string type;
 public:
-    Node(std::shared_ptr<Node> ch1 = nullptr, std::shared_ptr<Node> ch2 = nullptr, std::shared_ptr<Node> ch3 = nullptr, Lex l = EMPTY_LEX,string t = "");
-    Node(const Node&);
-    const std::shared_ptr<Node>* get_children() const;
+    Node(string type);
+    virtual const std::shared_ptr<const Node>* get_children() const = 0;
     string get_type() const;
-    string get_look() const;
-    pos_type get_pos() const;
+    virtual pos_type get_pos() const = 0;
+    virtual string get_look() const = 0;
+    virtual void write_subexpressions() const = 0;
+    virtual ~Node();
 };
 
+typedef std::shared_ptr<const Node> const_node_ptr;
 typedef std::shared_ptr<Node> node_ptr;
+typedef const_node_ptr const_tree;
 
-void write_expression(node_ptr, string&);
-
-void write_subexpressions(node_ptr);
-
-class AnalysisTree
-{
-    node_ptr peak;
+class Inner_node: public Node {
+    const_node_ptr children[3];
 public:
-    AnalysisTree(node_ptr p = nullptr) {
-        peak = p;
-    }
-    static node_ptr create_node(string, Lex);
-    static node_ptr create_node(string s = "",
-                             node_ptr ch1 = nullptr, node_ptr ch2 = nullptr, node_ptr ch3 = nullptr);
-    string write_expression() const;
+    Inner_node(string t, const_node_ptr chleft = nullptr, const_node_ptr chcen = nullptr, const_node_ptr chrignht = nullptr);
+    const const_node_ptr* get_children() const;
+    pos_type get_pos() const;
+    string get_look() const;
     void write_subexpressions() const;
 };
 
+class Leaf: public Node {
+    const_lex_ptr lex;
+public:
+    Leaf(const_lex_ptr);
+    const const_node_ptr* get_children() const;
+    pos_type get_pos() const;
+    string get_look() const;
+    void write_subexpressions() const;
+};
+
+const_node_ptr create_node(const_lex_ptr lex);
+const_node_ptr create_node(const string& type = "",
+       const_node_ptr ch1 = nullptr, const_node_ptr ch2 = nullptr, const_node_ptr ch3 = nullptr);
+void write_subexpressions(const_node_ptr tree);
 #endif // ANALYSISTREE_H

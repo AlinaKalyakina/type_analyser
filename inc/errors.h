@@ -1,9 +1,9 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 #include <map>
-#include <lexseq.h>
+#include "lexseq.h"
 #include <string>
-#include <analysistree.h>
+#include "analysistree.h"
 
 enum class Lex_err{BADCHR, BADLEX};
 enum class Syn_err{UNDEXP, EXTRA_LEX, ID_OR_NUM_EXPECT};
@@ -16,27 +16,27 @@ string say_pos(pos_type);
 class Error {
 public:
     virtual string what() const = 0;
-    virtual ~Error() {}
+    virtual ~Error();
 };
 
 class SemError: public Error
 {
     Sem_err code;
-    node_ptr exp;
-    node_ptr op;
+    const_node_ptr exp;
+    const_node_ptr op;
     string type;
 public:
-    SemError(Sem_err, string type = "", node_ptr expr = nullptr, node_ptr oper = nullptr);
+    SemError(Sem_err, string type = "", const_node_ptr expr = nullptr, const_node_ptr oper = nullptr);
     string what() const;
     ~SemError() {}
 };
 
 class SynError: public Error
 {
-    Lex met, exp;
+    const_lex_ptr met, exp;
     Syn_err code;
 public:
-    SynError(Syn_err, const Lex& found = EMPTY_LEX, const Lex& expected = EMPTY_LEX);
+    SynError(Syn_err, const_lex_ptr found = nullptr,const_lex_ptr expected = nullptr);
     string what() const;
     ~SynError() {}
 };
@@ -44,11 +44,11 @@ public:
 class LexError: public Error
 {
     static std::map<Lex_err, string> messages;
-    Lex lex;
+    const_lex_ptr lex;
     Lex_err code;
 public:
-    LexError(Lex_err, const Lex&);
-    LexError(Lex_err, int, const pos_type&);
+    LexError(Lex_err code, const_lex_ptr lex);
+    LexError(Lex_err code, int symbol, const pos_type& position);
     string what() const;
     ~LexError() {}
 };

@@ -1,71 +1,170 @@
 #include "lexseq.h"
 #include <iostream>
+#include <memory>
 #include "errors.h"
 
-string Lex::get_look() const {
-    return look;
-}
+//Lex
+Lex::Lex(pos_type p) : pos(p), empty_lex(false) {}
 
-LexType Lex::get_type() const {
-    return type;
-}
+Lex::~Lex() {}
 
-std::pair<int,int> Lex::get_pos() const {
+pos_type Lex::get_pos() const {
     return pos;
-}
-
-void Lex::set_look(const std::string &x) {
-    look = x;
-}
-
-void Lex::set_look(int x) {
-    look.clear();
-    look.push_back(x);
 }
 
 void Lex::set_pos(std::pair<int, int> x) {
     pos = x;
 }
-void Lex::set_type(LexType x) {
-    type = x;
-}
+
 void Lex::clear() {
-    look = "";
-    type = LexType::EMPTY;
+    empty_lex = true;
 }
 
 bool Lex::empty() const {
-    return look == "" && type == LexType::EMPTY;
+    return empty_lex;
 }
 
-bool Lex::operator==(const Lex&x) const{
-    return look == x.look && type == x.type && pos == x.pos;
+bool operator==(LexType x, const_lex_ptr l) {
+    return l->get_type() == x;
 }
 
-bool Lex::operator!=(const Lex&x) const {
-    return look != x.look || type != x.type || pos != x.pos;
+bool operator!=(LexType x, const_lex_ptr l) {
+    return l->get_type() != x;
 }
 
-bool Lex::operator==(LexType x) const{
-    return type == x;
+//Id_lex
+Id_lex::Id_lex(string view, pos_type pos) : Lex(pos), look(view) {}
+
+Id_lex::Id_lex(int c, pos_type pos) : Lex(pos) {
+    look.clear();
+    look += c;
 }
 
-bool Lex::operator!=(LexType x) const{
-    return type != x;
+string Id_lex::get_look() const {
+    return look;
 }
 
-bool operator==(LexType x, Lex l) {
-    return l.get_type() == x;
+LexType Id_lex::get_type() const {
+    return LexType::ID;
 }
 
-bool operator!=(LexType x, Lex l) {
-    return l.get_type() != x;
+void Id_lex::set_look(const std::string &x) {
+    look = x;
 }
 
+void Id_lex::set_look(int x) {
+    look.clear();
+    look += x;
+}
+
+bool Id_lex::operator==(LexType x) const{
+    return x == LexType::ID;
+}
+
+bool Id_lex::operator!=(LexType x) const{
+    return x != LexType::ID;
+}
+
+//Num_lex
+Num_lex::Num_lex(string look, pos_type pos) : Lex(pos),
+    val(std::stoi(look)) {}
+
+Num_lex::Num_lex(int n, pos_type pos) : Lex(pos), val(n) {}
+
+string Num_lex::get_look() const {
+    return std::to_string(val);
+}
+
+LexType Num_lex::get_type() const {
+    return LexType::NUM;
+}
+
+void Num_lex::set_look(const std::string &x) {
+    val = std::stoi(x);
+}
+
+void Num_lex::set_look(int x) {
+    val = x;
+}
+
+bool Num_lex::operator==(LexType x) const{
+    return x == LexType::NUM;
+}
+
+bool Num_lex::operator!=(LexType x) const{
+    return x != LexType::NUM;
+}
+
+//Delim_lex
+Delim_lex::Delim_lex(string look, pos_type pos) : Lex(pos),
+    type(delims.find(look[0])->second) {}
+
+Delim_lex::Delim_lex(LexType p, pos_type pos) : Lex(pos), type(p) {}
+
+string Delim_lex::get_look() const {
+    string res = "";
+    for(auto x : delims) {
+        if(x.second == type) {
+            return res += x.first;
+        }
+    }
+    return "";
+}
+
+LexType Delim_lex::get_type() const {
+    return type;
+}
+
+void Delim_lex::set_look(const std::string &x) {
+    type = delims.find(x[0])->second;
+}
+
+void Delim_lex::set_look(int x) {
+    type = LexType(x);
+}
+
+bool Delim_lex::operator==(LexType x) const{
+    return x == type;
+}
+
+bool Delim_lex::operator!=(LexType x) const{
+    return x != type;
+}
+
+
+lex_ptr create_lex(LexType x, pos_type pos) {
+    switch (x) {
+    case(LexType::ID):
+        return std::make_shared<Id_lex>("", pos);
+    case(LexType::NUM):
+        return std::make_shared<Num_lex>(0, pos);
+    default:
+        return std::make_shared<Delim_lex>(x, pos);
+    }
+}
+
+lex_ptr create_lex(string look, pos_type pos) {
+    if (isalpha(look[0])) {
+        return std::make_shared<Id_lex>(look, pos);
+    } else {
+        if (isdigit(look[0])) {
+            return std::make_shared<Num_lex>(look, pos);
+        } else {
+            return std::make_shared<Delim_lex>(look,pos);
+        }
+    }
+}
+
+lex_ptr empty_lex(pos_type pos) {
+    auto lex = create_lex(LexType::ID, pos);
+    lex->clear();
+    return lex;
+}
+//LexIt
 LexIt::LexIt(ItPos x) {
     if (x == ItPos::BEGIN) {
         curstate = State::H;
-        pos = std::make_pair(1,0);
+        curpos = std::make_pair(1,0);
         gc();
         ++*this;
     } else {
@@ -73,42 +172,45 @@ LexIt::LexIt(ItPos x) {
     }
 }
 
-Lex LexIt::operator* () const {
-    return curlex;
+const_lex_ptr LexIt::operator* () const {
+    if (curstate != State::END) {
+        return create_lex(curlex->get_look(), curlex->get_pos());
+    } else {
+        return empty_lex(curpos);
+    }
 }
 
 void LexIt::gc() {
     if (curstate != State::END) {
         c = getchar();
         if (c == '\n') {
-            pos.first++;
-            pos.second = -1;
+            curpos.first++;
+            curpos.second = -1;
         }
-        pos.second++;
+        curpos.second++;
     }
 }
 void LexIt::select_badlex() {
-    while ((curstate != State::END) && (terminals.count(c)) &&(delims.count(c) + gaps.count(c) == 0) && c!= -1) {
-        curline.push_back(c);
+    while ((curstate != State::END) && (terminals.count(c)) &&(delims.count(c) + gaps.count(c) == 0) && c != -1) {
+        curline += c;
         gc();
     }
-    curlex.set_look(curline);
+    curlex = create_lex(curline, lexpos);
     throw LexError(Lex_err::BADLEX, curlex);
 }
 
 LexIt& LexIt::operator++ () {
     curline.clear();
-    curlex.clear();
-    curlex.set_pos(pos);
-    LexType type = LexType::EMPTY;
+    lexpos = curpos;
+    bool lex_end = false;
     do {
         if (!terminals.count(c)) {
-            throw LexError(Lex_err::BADCHR, c, pos);
+            throw LexError(Lex_err::BADCHR, c, curpos);
         }
         switch (curstate) {
         case State::H:
             if(isalpha(c)) {
-                curline.push_back(c);
+                curline += c;
                 switch (c) {
                 case 'f':
                     curstate = State::F;
@@ -126,12 +228,12 @@ LexIt& LexIt::operator++ () {
                 }
             } else {
                 if (isdigit(c)) {
-                    curline.push_back(c);
+                    curline += c;
                     curstate = State::N;
                 } else {
                     if (delims.count(c)) {
-                        curline.push_back(c);
-                        type = (delims.find(c))->second;
+                        curline += c;
+                        lex_end = true;
                     } else {
                         if (c == -1) {
                             curstate = State::END;
@@ -146,10 +248,10 @@ LexIt& LexIt::operator++ () {
                 select_badlex();
             } else {
                 if (isdigit(c)) {
-                    curline.push_back(c);
+                    curline += c;
                 } else {
                     curstate = State::H;
-                    type = LexType::NUM;
+                    lex_end = true;
                     continue;
                 }
             }
@@ -157,7 +259,7 @@ LexIt& LexIt::operator++ () {
 
         case State::M:
             if(isalpha(c)) {
-                curline.push_back(c);
+                curline += c;
                 switch (c) {
                 case 'f':
                     curstate = State::F;
@@ -177,7 +279,7 @@ LexIt& LexIt::operator++ () {
         case State::I:
             if(delims.count(c) + gaps.count(c) > 0) {
                 curstate = State::H;
-                type = LexType::ID;
+                lex_end = true;
                 continue;
             } else {
                 select_badlex();
@@ -192,13 +294,13 @@ LexIt& LexIt::operator++ () {
                     break;
                 case 'f': select_badlex();
                 } //i, j, k, s, t doesn't change state
-                curline.push_back(c);
+                curline += c;
             } else {
                 if (isdigit(c)) {
                     select_badlex();
                 } else {
                     curstate = State::H;
-                    type = LexType::ID;
+                    lex_end = true;
                     continue;
                 }
             }
@@ -208,6 +310,7 @@ LexIt& LexIt::operator++ () {
             if(isalpha(c)) {
                 switch(c) {
                 case 'f': select_badlex();
+                    break;
                 case 'i':
                 case 'j':
                 case 'k':
@@ -215,25 +318,25 @@ LexIt& LexIt::operator++ () {
                 case 't':
                     curstate = State::F;
                 } //'a' doesn't change state
-                curline.push_back(c);
+                curline += c;
             } else {
                 select_badlex();
                 }
             }
         gc();
-    } while (curstate != State::H && curstate != State::END);
-    curlex.set_look(curline);
-    curlex.set_type(type);
+    } while (!lex_end && curstate != State::END);
+    curlex = create_lex(curline, lexpos);
     return *this;
 }
 
 bool LexIt::operator==(const LexIt& x) const {
-    return (x.curstate == State::END && curstate == State::END) || (x.pos == pos);
+    return curstate == x.curstate;
 }
 
 bool LexIt::operator!=(const LexIt& x) const {
-    return (x.curstate != State::END || curstate != State::END) && (x.pos != pos);
+    return curstate != x.curstate;
 }
+
 LexIt LexSeq::cbegin () const
 {
     return LexIt(ItPos::BEGIN);

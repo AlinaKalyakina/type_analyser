@@ -1,14 +1,9 @@
 #include "typedetector.h"
 #include "errors.h"
 
-TypeDetector::TypeDetector()
-{
-
-}
-
-string TypeDetector::get_type(const Lex& x) {
-    string type = x.get_look();
-    if (x.get_type() == LexType::NUM) {
+string TypeDetector::type_of_lex(const_lex_ptr x) {
+    string type = x->get_look();
+    if (x->get_type() == LexType::NUM) {
         return "ci";
     }
     if (delims.count(type[0])) {
@@ -27,7 +22,7 @@ string TypeDetector::get_type(const Lex& x) {
     return type;
 }
 
-string TypeDetector::op_check_and_res(Operation op_code, node_ptr x1, node_ptr op, node_ptr x2) {
+string TypeDetector::op_check_and_res(Operation op_code, const_node_ptr x1, const_node_ptr op, const_node_ptr x2) {
     switch (op_code) {
     case (Operation::PLUS):
     case (Operation::MUL):
@@ -40,7 +35,7 @@ string TypeDetector::op_check_and_res(Operation op_code, node_ptr x1, node_ptr o
         return "i";
     case (Operation::INDEX):
         if (x1->get_type()[0] != 'a') {
-            throw SemError(Sem_err::INDEX_NOT_ARRAY, "", x1, op);
+            throw SemError(Sem_err::INDEX_NOT_ARRAY, NO_TYPE, x1, op);
         }
         if (op->get_children()[1]->get_type() != "i" && op->get_children()[1]->get_type() != "ci") {
             throw SemError(Sem_err::BAD_TYPE_OF_INDEX, "i", x1, op);
