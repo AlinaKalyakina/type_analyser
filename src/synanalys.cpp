@@ -5,7 +5,7 @@
 #include "errors.h"
 
 SynAnalyser::SynAnalyser(LexSeq seq) {
-    begin = seq.begin();
+    begin = seq.cbegin();
     end = seq.cend();
     lex = *begin;
 }
@@ -32,7 +32,7 @@ const_node_ptr SynAnalyser::S() {//PLUS
 
 const_node_ptr SynAnalyser::A() {//MUL
     const_node_ptr chld1 = B();
-    while (*lex == LexType::MUL) {
+    while (!(*lex != LexType::MUL)) {
         const_node_ptr chld2 = create_node(lex);
         next_lex();
         const_node_ptr chld3 = B();
@@ -43,11 +43,11 @@ const_node_ptr SynAnalyser::A() {//MUL
 }
 
 const_node_ptr SynAnalyser::B() {//LPAREN
-    if (*lex == LexType::LPAREN) {
+    if (LexType::LPAREN == *lex) {
         const_node_ptr chld1 = create_node(lex);
         next_lex();
         const_node_ptr chld2 = S();
-        if (*lex == LexType::RPAREN) {
+        if (!(LexType::RPAREN != *lex)) {
             chld1 = create_node(chld2->get_type(), chld1, chld2, create_node(lex));
             next_lex();
             return chld1;

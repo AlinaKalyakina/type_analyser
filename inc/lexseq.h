@@ -32,10 +32,7 @@ public:
     Lex(pos_type pos);
     virtual string get_look() const = 0;
     virtual LexType get_type() const = 0;
-    virtual void set_look(const string&) = 0;
-    virtual void set_look(int) = 0;
     pos_type get_pos() const;
-    void set_pos(std::pair<int,int>);
     bool empty() const;
     void clear();
     virtual bool operator== (LexType) const = 0;
@@ -51,8 +48,8 @@ lex_ptr create_lex(LexType, pos_type = std::make_pair<int, int>(0,0));
 lex_ptr create_lex(string look, pos_type = std::make_pair<int, int>(0,0));
 
 
-bool operator==(LexType x, const_lex_ptr l);
-bool operator!=(LexType x, const_lex_ptr l);
+bool operator==(LexType x, const Lex& l);
+bool operator!=(LexType x, const Lex& l);
 
 class Id_lex: public Lex
 {
@@ -62,8 +59,6 @@ public:
     Id_lex(int, pos_type pos);
     string get_look() const;
     LexType get_type() const;
-    void set_look(const string&);
-    void set_look(int);
     bool operator== (LexType) const;
     bool operator!= (LexType) const;
 };
@@ -76,8 +71,6 @@ public:
     Num_lex(int, pos_type);
     string get_look() const;
     LexType get_type() const;
-    void set_look(const string&);
-    void set_look(int);
     bool operator== (LexType) const;
     bool operator!= (LexType) const;
 };
@@ -90,15 +83,11 @@ public:
     Delim_lex(LexType type, pos_type pos);
     string get_look() const;
     LexType get_type() const;
-    void set_look(const string&);
-    void set_look(int);
-    void clear();
-    bool empty() const;
     bool operator== (LexType) const;
     bool operator!= (LexType) const;
 };
 
-class LexIt: std::iterator<std::input_iterator_tag, const_lex_ptr>
+class const_Lex_it: std::iterator<std::input_iterator_tag, const_lex_ptr>
 {
     enum class State{H, F, M, M1, N, I, END};
     State curstate;
@@ -107,22 +96,24 @@ class LexIt: std::iterator<std::input_iterator_tag, const_lex_ptr>
     lex_ptr curlex;
     pos_type curpos, lexpos;
     void gc();
-    void select_badlex();
+    [[noreturn]] void select_badlex();
 public:
-    LexIt(ItPos x = ItPos::END);
-    LexIt& operator++();
+    const_Lex_it(ItPos x = ItPos::END);
+    const_Lex_it(const const_Lex_it&) = delete;
+    const_Lex_it(const_Lex_it&&);
+    const_Lex_it& operator=(const const_Lex_it&) = delete;
+    const_Lex_it& operator=(const_Lex_it&&);
+    const_Lex_it& operator++();
     const_lex_ptr operator*() const;
-    bool operator==(const LexIt&) const;
-    bool operator!=(const LexIt&) const;
+    bool operator==(const const_Lex_it&) const;
+    bool operator!=(const const_Lex_it&) const;
 };
 
-class LexSeq:Iterated<LexIt>
+class LexSeq:Iterated<const_Lex_it>
 {
 public:
-    LexIt cbegin() const;
-    LexIt cend() const;
-    LexIt begin() const;
-    LexIt end() const;
+    const_Lex_it cbegin() const;
+    const_Lex_it cend() const;
 };
 
 #endif // LEXSEQ_H

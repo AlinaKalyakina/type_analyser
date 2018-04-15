@@ -28,7 +28,7 @@ typedef const_node_ptr const_tree;
 class Inner_node: public Node {
     const_node_ptr children[3];
 public:
-    Inner_node(string t, const_node_ptr chleft = nullptr, const_node_ptr chcen = nullptr, const_node_ptr chrignht = nullptr);
+    Inner_node(string t, const_node_ptr chleft, const_node_ptr chcen, const_node_ptr chrignht = nullptr);
     const const_node_ptr* get_children() const;
     pos_type get_pos() const;
     string get_look() const;
@@ -46,7 +46,7 @@ public:
 };
 
 const_node_ptr create_node(const_lex_ptr lex);
-const_node_ptr create_node(const string& type = "",
-       const_node_ptr ch1 = nullptr, const_node_ptr ch2 = nullptr, const_node_ptr ch3 = nullptr);
+const_node_ptr create_node(const string& type,
+       const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3 = nullptr);
 void write_subexpressions(const_node_ptr tree);
 #endif // ANALYSISTREE_H

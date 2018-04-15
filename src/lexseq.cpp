@@ -12,10 +12,6 @@ pos_type Lex::get_pos() const {
     return pos;
 }
 
-void Lex::set_pos(std::pair<int, int> x) {
-    pos = x;
-}
-
 void Lex::clear() {
     empty_lex = true;
 }
@@ -24,12 +20,12 @@ bool Lex::empty() const {
     return empty_lex;
 }
 
-bool operator==(LexType x, const_lex_ptr l) {
-    return l->get_type() == x;
+bool operator==(LexType x, const Lex& l) {
+    return l == x;
 }
 
-bool operator!=(LexType x, const_lex_ptr l) {
-    return l->get_type() != x;
+bool operator!=(LexType x, const Lex& l) {
+    return l != x;
 }
 
 //Id_lex
@@ -45,24 +41,19 @@ string Id_lex::get_look() const {
 }
 
 LexType Id_lex::get_type() const {
-    return LexType::ID;
+    if (!this->empty()) {
+        return LexType::ID;
+    }
+    return LexType::EMPTY;
 }
 
-void Id_lex::set_look(const std::string &x) {
-    look = x;
-}
-
-void Id_lex::set_look(int x) {
-    look.clear();
-    look += x;
-}
 
 bool Id_lex::operator==(LexType x) const{
-    return x == LexType::ID;
+    return x == LexType::ID && !this->empty();
 }
 
 bool Id_lex::operator!=(LexType x) const{
-    return x != LexType::ID;
+    return x != LexType::ID || this->empty();
 }
 
 //Num_lex
@@ -76,23 +67,19 @@ string Num_lex::get_look() const {
 }
 
 LexType Num_lex::get_type() const {
-    return LexType::NUM;
+    if (!this->empty()) {
+        return LexType::NUM;
+    }
+    return LexType::EMPTY;
 }
 
-void Num_lex::set_look(const std::string &x) {
-    val = std::stoi(x);
-}
-
-void Num_lex::set_look(int x) {
-    val = x;
-}
 
 bool Num_lex::operator==(LexType x) const{
-    return x == LexType::NUM;
+    return x == LexType::NUM && !this->empty();
 }
 
 bool Num_lex::operator!=(LexType x) const{
-    return x != LexType::NUM;
+    return x != LexType::NUM|| this->empty();
 }
 
 //Delim_lex
@@ -112,23 +99,18 @@ string Delim_lex::get_look() const {
 }
 
 LexType Delim_lex::get_type() const {
-    return type;
-}
-
-void Delim_lex::set_look(const std::string &x) {
-    type = delims.find(x[0])->second;
-}
-
-void Delim_lex::set_look(int x) {
-    type = LexType(x);
+    if (!this->empty()) {
+        return type;
+    }
+    return LexType::EMPTY;
 }
 
 bool Delim_lex::operator==(LexType x) const{
-    return x == type;
+    return x == type && !this->empty();
 }
 
 bool Delim_lex::operator!=(LexType x) const{
-    return x != type;
+    return x != type || this->empty();
 }
 
 
@@ -160,8 +142,8 @@ lex_ptr empty_lex(pos_type pos) {
     lex->clear();
     return lex;
 }
-//LexIt
-LexIt::LexIt(ItPos x) {
+//const_Lex_it
+const_Lex_it::const_Lex_it(ItPos x) {
     if (x == ItPos::BEGIN) {
         curstate = State::H;
         curpos = std::make_pair(1,0);
@@ -172,7 +154,38 @@ LexIt::LexIt(ItPos x) {
     }
 }
 
-const_lex_ptr LexIt::operator* () const {
+const_Lex_it::const_Lex_it(const_Lex_it&& x) {
+    curstate = x.curstate;
+    x.curstate = State::END;
+    c = x.c;
+    x.c = -1;
+    curline = x.curline;
+    x.curline = "";
+    curlex = x.curlex;
+    x.curlex = nullptr;
+    curpos = x.curpos;
+    lexpos = x.lexpos;
+    x.curpos = x.lexpos = std::make_pair<int, int>(0,0);
+}
+
+const_Lex_it& const_Lex_it::operator=(const_Lex_it&& x) {
+    if (this != &x) {
+        curstate = x.curstate;
+        x.curstate = State::END;
+        c = x.c;
+        x.c = -1;
+        curline = x.curline;
+        x.curline = "";
+        curlex = x.curlex;
+        x.curlex = nullptr;
+        curpos = x.curpos;
+        lexpos = x.lexpos;
+        x.curpos = x.lexpos = std::make_pair<int, int>(0,0);
+    }
+    return *this;
+}
+
+const_lex_ptr const_Lex_it::operator* () const {
     if (curstate != State::END) {
         return create_lex(curlex->get_look(), curlex->get_pos());
     } else {
@@ -180,7 +193,7 @@ const_lex_ptr LexIt::operator* () const {
     }
 }
 
-void LexIt::gc() {
+void const_Lex_it::gc() {
     if (curstate != State::END) {
         c = getchar();
         if (c == '\n') {
@@ -190,8 +203,8 @@ void LexIt::gc() {
         curpos.second++;
     }
 }
-void LexIt::select_badlex() {
-    while ((curstate != State::END) && (terminals.count(c)) &&(delims.count(c) + gaps.count(c) == 0) && c != -1) {
+void const_Lex_it::select_badlex() {
+    while (terminals.count(c) &&(delims.count(c) + gaps.count(c) == 0) && c != -1) {
         curline += c;
         gc();
     }
@@ -199,7 +212,7 @@ void LexIt::select_badlex() {
     throw LexError(Lex_err::BADLEX, curlex);
 }
 
-LexIt& LexIt::operator++ () {
+const_Lex_it& const_Lex_it::operator++ () {
     curline.clear();
     lexpos = curpos;
     bool lex_end = false;
@@ -284,7 +297,6 @@ LexIt& LexIt::operator++ () {
             } else {
                 select_badlex();
             }
-            break;
 
         case State::F:
             if(isalpha(c)) {
@@ -310,7 +322,6 @@ LexIt& LexIt::operator++ () {
             if(isalpha(c)) {
                 switch(c) {
                 case 'f': select_badlex();
-                    break;
                 case 'i':
                 case 'j':
                 case 'k':
@@ -329,27 +340,20 @@ LexIt& LexIt::operator++ () {
     return *this;
 }
 
-bool LexIt::operator==(const LexIt& x) const {
-    return curstate == x.curstate;
+bool const_Lex_it::operator==(const const_Lex_it& x) const {
+    return curstate == x.curstate && (curpos == x.curpos || (curstate == State::END && x.curstate == State::END));
 }
 
-bool LexIt::operator!=(const LexIt& x) const {
-    return curstate != x.curstate;
+bool const_Lex_it::operator!=(const const_Lex_it& x) const {
+    return curstate != x.curstate || (x.curpos != x.curpos && (curstate != State::END || x.curstate != State::END));
 }
 
-LexIt LexSeq::cbegin () const
+const_Lex_it LexSeq::cbegin () const
 {
-    return LexIt(ItPos::BEGIN);
+    return const_Lex_it(ItPos::BEGIN);
 }
-LexIt LexSeq::begin () const
+
+const_Lex_it LexSeq::cend () const
 {
-    return LexIt(ItPos::BEGIN);
-}
-LexIt LexSeq::end () const
-{
-    return LexIt(ItPos::END);
-}
-LexIt LexSeq::cend () const
-{
-    return LexIt(ItPos::END);
+    return const_Lex_it(ItPos::END);
 }

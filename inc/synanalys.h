@@ -7,7 +7,7 @@ enum class Operation{PLUS, MUL, INDEX};
 
 class SynAnalyser
 {
-    LexIt begin, end;
+    const_Lex_it begin, end;
     const_lex_ptr lex;
     const_tree tree;
     const_node_ptr S();

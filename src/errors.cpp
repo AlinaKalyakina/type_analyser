@@ -45,7 +45,6 @@ string SynError::what() const {
             return res + ", but lexem " + met->get_look() + " was found";
         }
     }
-    return res;
 }
 
 SemError::SemError(Sem_err er,  string t, const_node_ptr x1, const_node_ptr oper):
@@ -70,5 +69,4 @@ string SemError::what() const {
                 "). Only arrays can be indexed, but " +
                 exp->get_look() + " has type " + TypeDetector::say_type(exp->get_type());
     }
-    return "";
 }

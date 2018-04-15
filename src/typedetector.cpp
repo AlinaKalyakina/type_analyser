@@ -133,6 +133,7 @@ string TypeDetector::say_type(string type){
                 return res;
             case ('a'):
                 res += "array of ";
+                curstate = A2;
                 break;
             case ('i'):
                 res += "integer, ";
@@ -149,9 +150,11 @@ string TypeDetector::say_type(string type){
                 break;
             case ('i'):
                 res += "integer, ";
+                curstate = F2;
                 break;
             case ('s'):
                 res += "string, ";
+                curstate = F2;
                 break;
             }
         }
