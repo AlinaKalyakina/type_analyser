@@ -1,2 +1,4 @@
-1./garbage
-2./lcov
+./lcov/
+./analyser.pro.user
+./exe/
+./coverage/
