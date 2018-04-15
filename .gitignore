@@ -1,4 +1,4 @@
-./lcov/
-./analyser.pro.user
-./exe/
-./coverage/
+/lcov/
+analyser.pro.user
+/exe/
+/coverage/
