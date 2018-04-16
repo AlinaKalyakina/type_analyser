@@ -4,8 +4,8 @@
 #include "typedetector.h"
 #include "errors.h"
 
-SynAnalyser::SynAnalyser(LexSeq seq) {
-    begin = seq.cbegin();
+SynAnalyser::SynAnalyser(LexSeq seq) : begin(seq.cbegin()) {
+//    begin = seq.cbegin();
     end = seq.cend();
     lex = *begin;
 }
@@ -88,7 +88,7 @@ const_tree SynAnalyser::analyse() {
     if(begin != end) {
         peak = S();
     }
-    if (begin != end) {
+    if (!(begin == end)) {
         throw SynError(Syn_err::EXTRA_LEX, lex); //EXCEPTION
     }
     return peak;

@@ -45,7 +45,7 @@ typedef std::shared_ptr<const Lex> const_lex_ptr;
 typedef std::shared_ptr<Lex> lex_ptr;
 
 lex_ptr create_lex(LexType, pos_type = std::make_pair<int, int>(0,0));
-lex_ptr create_lex(string look, pos_type = std::make_pair<int, int>(0,0));
+lex_ptr create_lex(string look, pos_type = std::make_pair<int, int>(0,0), bool badlex = false);
 
 
 bool operator==(LexType x, const Lex& l);

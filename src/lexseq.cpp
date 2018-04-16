@@ -49,18 +49,16 @@ LexType Id_lex::get_type() const {
 
 
 bool Id_lex::operator==(LexType x) const{
-    return x == LexType::ID && !this->empty();
+    return x == LexType::ID || (this->empty() && x == LexType::EMPTY);
 }
 
 bool Id_lex::operator!=(LexType x) const{
-    return x != LexType::ID || this->empty();
+    return x != LexType::ID && !(this->empty() && x == LexType::EMPTY);
 }
 
 //Num_lex
 Num_lex::Num_lex(string look, pos_type pos) : Lex(pos),
     val(std::stoi(look)) {}
-
-Num_lex::Num_lex(int n, pos_type pos) : Lex(pos), val(n) {}
 
 string Num_lex::get_look() const {
     return std::to_string(val);
@@ -75,11 +73,11 @@ LexType Num_lex::get_type() const {
 
 
 bool Num_lex::operator==(LexType x) const{
-    return x == LexType::NUM && !this->empty();
+    return x == LexType::NUM || (this->empty() && x == LexType::EMPTY);
 }
 
 bool Num_lex::operator!=(LexType x) const{
-    return x != LexType::NUM|| this->empty();
+    return x != LexType::NUM && !(this->empty() && x == LexType::EMPTY);
 }
 
 //Delim_lex
@@ -106,11 +104,11 @@ LexType Delim_lex::get_type() const {
 }
 
 bool Delim_lex::operator==(LexType x) const{
-    return x == type && !this->empty();
+    return x == type || (this->empty() && x == LexType::EMPTY);
 }
 
 bool Delim_lex::operator!=(LexType x) const{
-    return x != type || this->empty();
+    return x != type && !(this->empty() && x == LexType::EMPTY);
 }
 
 
@@ -119,14 +117,14 @@ lex_ptr create_lex(LexType x, pos_type pos) {
     case(LexType::ID):
         return std::make_shared<Id_lex>("", pos);
     case(LexType::NUM):
-        return std::make_shared<Num_lex>(0, pos);
+        return std::make_shared<Num_lex>("0", pos);
     default:
         return std::make_shared<Delim_lex>(x, pos);
     }
 }
 
-lex_ptr create_lex(string look, pos_type pos) {
-    if (isalpha(look[0])) {
+lex_ptr create_lex(string look, pos_type pos, bool badlex) {
+    if (isalpha(look[0]) || badlex) {
         return std::make_shared<Id_lex>(look, pos);
     } else {
         if (isdigit(look[0])) {
@@ -208,7 +206,10 @@ void const_Lex_it::select_badlex() {
         curline += c;
         gc();
     }
-    curlex = create_lex(curline, lexpos);
+    if (!terminals.count(c)) {
+        throw LexError(Lex_err::BADCHR, c, curpos);
+    }
+    curlex = create_lex(curline, lexpos, true);
     throw LexError(Lex_err::BADLEX, curlex);
 }
 
