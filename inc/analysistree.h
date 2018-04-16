@@ -17,7 +17,7 @@ public:
     string get_type() const;
     virtual pos_type get_pos() const = 0;
     virtual string get_look() const = 0;
-    virtual void write_subexpressions() const = 0;
+    virtual string write_subexpressions() const = 0;
     virtual ~Node();
 };
 
@@ -32,7 +32,7 @@ public:
     const const_node_ptr* get_children() const;
     pos_type get_pos() const;
     string get_look() const;
-    void write_subexpressions() const;
+    string write_subexpressions() const;
 };
 
 class Leaf: public Node {
@@ -42,7 +42,7 @@ public:
     const const_node_ptr* get_children() const;
     pos_type get_pos() const;
     string get_look() const;
-    void write_subexpressions() const;
+    string write_subexpressions() const;
 };
 
 const_node_ptr create_node(const_lex_ptr lex);

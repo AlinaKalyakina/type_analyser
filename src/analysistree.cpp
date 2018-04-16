@@ -39,18 +39,20 @@ string Inner_node::get_look() const {
     return res;
 }
 
-void Inner_node::write_subexpressions() const {
+string Inner_node::write_subexpressions() const {
+    string exp = "";
     for (int i = 0; i < 3; i++) {
         if (children[i] != nullptr) {
-            children[i]->write_subexpressions();
+            exp += children[i]->write_subexpressions();
         } else {
             break;
         }
     }
     if (this->get_type() != NO_TYPE) {
-        std::cout << this->get_look() << " : " <<
+        std::cout << exp << " : " <<
                     TypeDetector::say_type(this->get_type()) << std::endl;
     }
+    return exp;
 }
 
 //Leaf
@@ -74,10 +76,11 @@ string Leaf::get_look() const {
     return lex->get_look();
 }
 
-void Leaf::write_subexpressions() const {
+string Leaf::write_subexpressions() const {
     if (*lex == LexType::ID || *lex == LexType::NUM) {
         std::cout << this->get_look() << " : " << TypeDetector::say_type(this->get_type()) << std::endl;
     }
+    return this->get_look();
 }
 
 const_node_ptr create_node(const_lex_ptr lex) {
