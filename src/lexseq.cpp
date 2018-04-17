@@ -251,6 +251,9 @@ const_Lex_it& const_Lex_it::operator++ () {
                     } else {
                         if (c == -1) {
                             curstate = State::END;
+                        } else {
+                            lexpos = curpos;
+                            lexpos.second++;
                         }
                     }
                 }

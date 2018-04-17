@@ -56,7 +56,7 @@ string TypeDetector::say_type(string type){
             case ('\0'):
                 return "no semantic type";
             case ('c'):
-                return "numerical constant";
+                return "numeral constant";
             case ('i'):
                 return "integer";
             case ('s'):
