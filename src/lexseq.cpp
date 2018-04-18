@@ -124,6 +124,9 @@ lex_ptr create_lex(LexType x, pos_type pos) {
 }
 
 lex_ptr create_lex(string look, pos_type pos, bool badlex) {
+    if (look == "") {
+        return empty_lex(pos);
+    }
     if (isalpha(look[0]) || badlex) {
         return std::make_shared<Id_lex>(look, pos);
     } else {
@@ -146,7 +149,7 @@ bool const_Lex_it::exist_flag = false;
 const_Lex_it::const_Lex_it(ItPos x) {
     if (x == ItPos::BEGIN) {
         if (exist_flag) {
-            throw "Attempt to create one more lexem iterator";
+            throw "Attempt to create one more lexem iterator!!!";
         }
         exist_flag = true;
         curstate = State::H;
@@ -209,7 +212,13 @@ void const_Lex_it::gc() {
         c = getchar();
         if (c == '\n') {
             curpos.first++;
-            curpos.second = -1;
+            curpos.second = 0;
+            return;
+        } else {
+            if (c == '\t') {
+                curpos.second += Sizes::TAB_SIZE;
+                return;
+            }
         }
         curpos.second++;
     }
@@ -227,6 +236,9 @@ void const_Lex_it::select_badlex() {
 }
 
 const_Lex_it& const_Lex_it::operator++ () {
+    if (curstate == State::END) {
+        return *this;
+    }
     curline.clear();
     bool lex_end = false;
     do {

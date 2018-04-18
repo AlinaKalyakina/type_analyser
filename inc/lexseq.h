@@ -22,7 +22,7 @@ const std::map<int, LexType> delims {{'+',LexType::PLUS}, {'*',LexType::MUL},
                                          {'[',LexType::LSQBRACKET}, {']', LexType::RSQBEACKET}};
 const std::set<int> gaps {' ', '\n', '\t', '\0',-1};
 
-const int end = 0;
+enum Sizes{TAB_SIZE = 4};
 
 class Lex
 {
@@ -46,7 +46,7 @@ typedef std::shared_ptr<Lex> lex_ptr;
 
 lex_ptr create_lex(LexType, pos_type = std::make_pair<int, int>(0,0));
 lex_ptr create_lex(string look, pos_type = std::make_pair<int, int>(0,0), bool badlex = false);
-
+lex_ptr empty_lex(pos_type pos);
 
 bool operator==(LexType x, const Lex& l);
 bool operator!=(LexType x, const Lex& l);
