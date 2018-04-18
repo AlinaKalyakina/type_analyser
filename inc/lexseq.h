@@ -65,10 +65,9 @@ public:
 
 class Num_lex: public Lex
 {
-    int val;
+    string val;
 public:
     Num_lex(string look, pos_type pos);
-    Num_lex(int, pos_type);
     string get_look() const;
     LexType get_type() const;
     bool operator== (LexType) const;

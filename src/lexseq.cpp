@@ -58,10 +58,10 @@ bool Id_lex::operator!=(LexType x) const{
 
 //Num_lex
 Num_lex::Num_lex(string look, pos_type pos) : Lex(pos),
-    val(std::stoi(look)) {}
+    val(look) {}
 
 string Num_lex::get_look() const {
-    return std::to_string(val);
+    return val;
 }
 
 LexType Num_lex::get_type() const {
