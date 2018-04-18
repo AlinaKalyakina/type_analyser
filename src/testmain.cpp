@@ -14,11 +14,23 @@ int main()
         LexSeq x;
         auto it1 = x.cbegin(); 
         auto it2 = x.cbegin();
-        std::cout << "ERROR" << std::endl;
+        std::cout << "ONE MORE BEGIN WAS CREATED" << std::endl;
     }
     catch(const char* x) { 
         std::cout << x << std::endl;
     }    
+    try {
+        LexSeq x;
+        auto it1 = x.cend();
+        auto it2 = x.cend();
+        ++it1;
+        if (it1 == it2) {
+            std::cout << "After making ++ for end iterator it didn't changed" << std::endl;
+        } else {
+            std::cout << "ERROR WITH +++!!!" << std::endl;
+        }
+    } 
+    catch (...) { std::cout << "ERROR!" << std::endl; }
     LexType type[3] = {LexType::PLUS, LexType::NUM, LexType::ID};
     lex_ptr lex;
     for (auto t : type) {
