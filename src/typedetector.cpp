@@ -45,7 +45,7 @@ string TypeDetector::op_check_and_res(Operation op_code, const_node_ptr x1, cons
 }
 
 string TypeDetector::say_type(string type){
-    enum State{H, A, A1, A2, F1, F2, F3};
+    enum State{H, ARR, ARR_RETURN, ARR_PARAM, FUNC_INIT, FUNC_RETURN, FUNC_PARAM};
     auto curstate = H;
     string res = "";
     unsigned long i = 0;
@@ -63,14 +63,14 @@ string TypeDetector::say_type(string type){
                 return "string";
             case ('a'):
                 res += "array of ";
-                curstate = A;
+                curstate = ARR;
                 break;
             case ('f'): res += "function, returning ";
-                curstate = F1;
+                curstate = FUNC_INIT;
                 break;
             }
             break;
-        case (A):
+        case (ARR):
             switch (type[i]) {
             case ('i'):
                 return res += "integer";
@@ -81,59 +81,59 @@ string TypeDetector::say_type(string type){
                 break;
             case ('f'):
                 res+= "functions, returning ";
-                curstate = F1;
+                curstate = FUNC_INIT;
                 break;
             }
             break;
-        case (F1):
+        case (FUNC_INIT):
             switch (type[i]) {
             case ('\0'):
                 return res +="void, with no parameters";
             case ('a'):
                 res += "array of ";
-                curstate = A1;
+                curstate = ARR_RETURN;
                 break;
             case ('s'):
                 res += "string, ";
-                curstate = F2;
+                curstate = FUNC_RETURN;
                 break;
             case ('i'):
                 res += "integer, ";
-                curstate = F2;
+                curstate = FUNC_RETURN;
                 break;
             }
             break;
-        case (A1):
+        case (ARR_RETURN):
             switch (type[i]) {
             case ('a'):
                 res += "arrays of ";
                 break;
             case ('s'):
                 res += "string, ";
-                curstate = F2;
+                curstate = FUNC_RETURN;
                 break;
             case ('i'):
                 res += "integer, ";
-                curstate = F2;
+                curstate = FUNC_RETURN;
                 break;
             }
             break;
-        case (F2):
+        case (FUNC_RETURN):
             if (type[i] == '\0') {
                 return res += "with no parameters";
             } else {
                 res += "parameters: ";
-                curstate = F3;
+                curstate = FUNC_PARAM;
                 continue;
             }
-        case (F3):
+        case (FUNC_PARAM):
             switch (type[i]) {
             case ('\0'):
                 res.erase(res.size() - 2, 2);
                 return res;
             case ('a'):
                 res += "array of ";
-                curstate = A2;
+                curstate = ARR_PARAM;
                 break;
             case ('i'):
                 res += "integer, ";
@@ -143,18 +143,18 @@ string TypeDetector::say_type(string type){
                 break;
             }
             break;
-        case (A2):
+        case (ARR_PARAM):
             switch (type[i]) {
             case ('a'):
                 res += "arrays of ";
                 break;
             case ('i'):
                 res += "integer, ";
-                curstate = F3;
+                curstate = FUNC_PARAM;
                 break;
             case ('s'):
                 res += "string, ";
-                curstate = F3;
+                curstate = FUNC_PARAM;
                 break;
             }
         }

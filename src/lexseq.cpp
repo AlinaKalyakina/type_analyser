@@ -251,23 +251,23 @@ const_Lex_it& const_Lex_it::operator++ () {
                 curline += c;
                 switch (c) {
                 case 'f':
-                    curstate = State::F;
+                    curstate = State::FUNC;
                     break;
                 case 'a':
-                    curstate = State::M;
+                    curstate = State::ARR;
                     break;
                 case 'i':
                 case 'j':
                 case 'k':
                 case 's':
                 case 't':
-                    curstate = State::I;
+                    curstate = State::ID;
                     break;
                 }
             } else {
                 if (isdigit(c)) {
                     curline += c;
-                    curstate = State::N;
+                    curstate = State::NUM;
                 } else {
                     if (delims.count(c)) {
                         curline += c;
@@ -283,7 +283,7 @@ const_Lex_it& const_Lex_it::operator++ () {
             lexpos = curpos;
             break;
 
-        case State::N:
+        case State::NUM:
             if(isalpha(c)) {
                 select_badlex();
             } else {
@@ -297,26 +297,26 @@ const_Lex_it& const_Lex_it::operator++ () {
             }
             break;
 
-        case State::M:
+        case State::ARR:
             if(isalpha(c)) {
                 curline += c;
                 switch (c) {
                 case 'f':
-                    curstate = State::F;
+                    curstate = State::FUNC;
                     break;
                 case 'i':
                 case 'j':
                 case 'k':
                 case 's':
                 case 't':
-                    curstate = State::I;
+                    curstate = State::ID;
                 }
             } else {
                 select_badlex();
             }
             break;
 
-        case State::I:
+        case State::ID:
             if(delims.count(c) + gaps.count(c) > 0) {
                 curstate = State::H;
                 lex_end = true;
@@ -325,11 +325,11 @@ const_Lex_it& const_Lex_it::operator++ () {
                 select_badlex();
             }
 
-        case State::F:
+        case State::FUNC:
             if(isalpha(c)) {
                 switch(c) {
                 case 'a':
-                    curstate = State::M1;
+                    curstate = State::ARR_IN_FUNC;
                     break;
                 case 'f': select_badlex();
                 } //i, j, k, s, t doesn't change state
@@ -345,7 +345,7 @@ const_Lex_it& const_Lex_it::operator++ () {
             }
             break;
 
-        case State::M1:
+        case State::ARR_IN_FUNC:
             if(isalpha(c)) {
                 switch(c) {
                 case 'f': select_badlex();
@@ -354,7 +354,7 @@ const_Lex_it& const_Lex_it::operator++ () {
                 case 'k':
                 case 's':
                 case 't':
-                    curstate = State::F;
+                    curstate = State::FUNC;
                 } //'a' doesn't change state
                 curline += c;
             } else {

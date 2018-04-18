@@ -88,7 +88,7 @@ public:
 
 class const_Lex_it: std::iterator<std::input_iterator_tag, const_lex_ptr>
 {
-    enum class State{H, F, M, M1, N, I, END};
+    enum class State{H, FUNC, ARR, ARR_IN_FUNC, NUM, ID, END};
     State curstate;
     int c;
     string curline;
