@@ -6,9 +6,19 @@
 #include "analysistree.h"
 #include "typedetector.h"
 #include <memory>
+#include <string>
 
 int main()
 {
+    try {
+        LexSeq x;
+        auto it1 = x.cbegin(); 
+        auto it2 = x.cbegin();
+        std::cout << "ERROR" << std::endl;
+    }
+    catch(const char* x) { 
+        std::cout << x << std::endl;
+    }    
     LexType type[3] = {LexType::PLUS, LexType::NUM, LexType::ID};
     lex_ptr lex;
     for (auto t : type) {

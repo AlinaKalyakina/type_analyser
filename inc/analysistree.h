@@ -1,8 +1,6 @@
 #ifndef ANALYSISTREE_H
 #define ANALYSISTREE_H
 #include <memory>
-
-
 #include "lexseq.h"
 #include <string>
 #include <vector>

@@ -16,6 +16,7 @@ echo $VAR;
 valgrind --quiet --leak-check=full $EXE/$OUT<tmp 1>>$RES/$TEST_RES 2>>$RES/$VAL_RES
 echo -e "\n*******" >> $RES/$TEST_RES
 done
+echo -n -e "f" > tmp
+$EXE/testmain.out >> $RES/$TEST_RES <tmp
 rm tmp
-$EXE/testmain.out >> $RES/$TEST_RES
 

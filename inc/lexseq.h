@@ -30,11 +30,11 @@ class Lex
     bool empty_lex;
 public:
     Lex(pos_type pos);
-    virtual string get_look() const = 0;
-    virtual LexType get_type() const = 0;
     pos_type get_pos() const;
     bool empty() const;
     void clear();
+    virtual string get_look() const = 0;
+    virtual LexType get_type() const = 0;
     virtual bool operator== (LexType) const = 0;
     virtual bool operator!= (LexType) const = 0;
     virtual ~Lex();
@@ -96,6 +96,7 @@ class const_Lex_it: std::iterator<std::input_iterator_tag, const_lex_ptr>
     pos_type curpos, lexpos;
     void gc();
     [[noreturn]] void select_badlex();
+    static bool exist_flag;
 public:
     const_Lex_it(ItPos x = ItPos::END);
     const_Lex_it(const const_Lex_it&) = delete;
@@ -106,6 +107,7 @@ public:
     const_lex_ptr operator*() const;
     bool operator==(const const_Lex_it&) const;
     bool operator!=(const const_Lex_it&) const;
+    ~const_Lex_it();
 };
 
 class LexSeq:Iterated<const_Lex_it>

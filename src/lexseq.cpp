@@ -141,8 +141,14 @@ lex_ptr empty_lex(pos_type pos) {
     return lex;
 }
 //const_Lex_it
+bool const_Lex_it::exist_flag = false;
+
 const_Lex_it::const_Lex_it(ItPos x) {
     if (x == ItPos::BEGIN) {
+        if (exist_flag) {
+            throw "Attempt to create one more lexem iterator";
+        }
+        exist_flag = true;
         curstate = State::H;
         curpos = std::make_pair(1,0);
         gc();
@@ -164,6 +170,7 @@ const_Lex_it::const_Lex_it(const_Lex_it&& x) {
     curpos = x.curpos;
     lexpos = x.lexpos;
     x.curpos = x.lexpos = std::make_pair<int, int>(0,0);
+
 }
 
 const_Lex_it& const_Lex_it::operator=(const_Lex_it&& x) {
@@ -181,6 +188,12 @@ const_Lex_it& const_Lex_it::operator=(const_Lex_it&& x) {
         x.curpos = x.lexpos = std::make_pair<int, int>(0,0);
     }
     return *this;
+}
+
+const_Lex_it::~const_Lex_it() {
+    if (curstate != State::END) {
+        exist_flag = false;
+    }
 }
 
 const_lex_ptr const_Lex_it::operator* () const {
@@ -215,7 +228,6 @@ void const_Lex_it::select_badlex() {
 
 const_Lex_it& const_Lex_it::operator++ () {
     curline.clear();
-    lexpos = curpos;
     bool lex_end = false;
     do {
         if (!terminals.count(c)) {
@@ -251,13 +263,12 @@ const_Lex_it& const_Lex_it::operator++ () {
                     } else {
                         if (c == -1) {
                             curstate = State::END;
-                        } else {
-                            lexpos = curpos;
-                            lexpos.second++;
+                            exist_flag = false;
                         }
                     }
                 }
             }
+            lexpos = curpos;
             break;
 
         case State::N:

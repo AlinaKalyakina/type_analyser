@@ -9,10 +9,8 @@ enum class Lex_err{BADCHR, BADLEX};
 enum class Syn_err{UNDEXP, EXTRA_LEX, ID_OR_NUM_EXPECT};
 enum class Sem_err{BAD_TYPE_OF_INDEX, TYPE_MISMATCH, INDEX_NOT_ARRAY};
 
-
 string say_pos(pos_type);
 
-//!!!!!!!????????!!!!!!!
 class Error {
 public:
     virtual string what() const = 0;
