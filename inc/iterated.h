@@ -1,7 +1,6 @@
 #ifndef ITERATED_H
 #define ITERATED_H
 
-
 template <typename T>
 class Iterated {
 public:

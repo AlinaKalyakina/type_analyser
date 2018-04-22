@@ -4,13 +4,53 @@
 #include "typedetector.h"
 #include "errors.h"
 
+const_node_ptr create_node(const Lex& lex) {
+    string type = TypeDetector::type_determine(lex);
+    return std::make_shared<Node>(lex, type);
+}
+
+const_node_ptr create_node(Operation op, const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3) {
+    switch (op) {
+    case(Operation::PLUS):
+    case(Operation::MUL): {
+        auto type = ch1->exp_type;
+        if (type != "i" && type != "ci") {
+            throw SemError(Sem_err::TYPE_MISMATCH, ch1, ch2, "i"); // ERROR
+        }
+        type = ch3->exp_type;
+        if (type != "i" && type != "ci") {
+            throw SemError(Sem_err::TYPE_MISMATCH, ch3, ch2, "i");
+        }
+        return std::make_shared<Node>("i", ch1, ch2, ch3);
+    }
+    case(Operation::INDEXING): {
+        auto type = ch1->exp_type;
+        if (type[0] != 'a') {
+            throw SemError(Sem_err::INDEX_NOT_ARRAY, ch1, ch2);
+        }
+        type = ch2->children[1]->exp_type;
+        if (type != "ci" && type != "i") {
+            throw SemError(Sem_err::BAD_TYPE_OF_INDEX, ch1, ch2, "i");
+        }
+        type = ch1->exp_type;
+        return std::make_shared<Node>(type.erase(0,1), ch1, ch2);
+    }
+    case(Operation::SQBLANC):
+    case(Operation::NO_OP):
+        return std::make_shared<Node>(NO_TYPE, ch1, ch2, ch3);
+    case(Operation::PAREN):
+        return std::make_shared<Node>(ch2->exp_type, ch1, ch2, ch3);
+    }
+}
+
+
 SynAnalyser::SynAnalyser(LexSeq seq) : begin(seq.cbegin()) {
 //    begin = seq.cbegin();
     end = seq.cend();
     lex = *begin;
 }
 
-const_lex_ptr SynAnalyser::next_lex() {
+Lex SynAnalyser::next_lex() {
     ++begin;
     lex = *begin;
     return lex;
@@ -19,12 +59,11 @@ const_lex_ptr SynAnalyser::next_lex() {
 
 const_node_ptr SynAnalyser::S() {//PLUS
     const_node_ptr chld1 = A();
-    while (*lex == LexType::PLUS) {
+    while (lex.type == LexType::PLUS) {
         const_node_ptr chld2 = create_node(lex);//PLUS
         next_lex();
         const_node_ptr chld3 = A();
-        chld1 = create_node(TypeDetector::op_check_and_res
-                  (Operation::PLUS, chld1, chld2, chld3), chld1, chld2, chld3);
+        chld1 = create_node(Operation::PLUS, chld1, chld2, chld3);
     }
     return chld1;
 }
@@ -32,56 +71,51 @@ const_node_ptr SynAnalyser::S() {//PLUS
 
 const_node_ptr SynAnalyser::A() {//MUL
     const_node_ptr chld1 = B();
-    while (!(*lex != LexType::MUL)) {
+    while (lex.type == LexType::MUL) {
         const_node_ptr chld2 = create_node(lex);
         next_lex();
         const_node_ptr chld3 = B();
-        chld1 = create_node(TypeDetector::op_check_and_res(Operation::MUL,
-                                      chld1, chld2, chld3), chld1, chld2, chld3);
+        chld1 = create_node(Operation::MUL, chld1, chld2, chld3);
     }
     return chld1;
 }
 
-const_node_ptr SynAnalyser::B() {//LPAREN
-    if (LexType::LPAREN == *lex) {
+const_node_ptr  SynAnalyser::B() { // ID+SQBRACK
+    const_node_ptr chld1 = C();
+    while (next_lex().type == LexType::LSQBRACKET) {
+        const_node_ptr chld2 = create_node(lex);
+        next_lex();
+        const_node_ptr chld3 = S();
+        if (lex.type == LexType::RSQBEACKET) {
+            chld2 = create_node(Operation::SQBLANC, chld2, chld3, create_node(lex));
+        } else {
+            throw SynError(Syn_err::UNDEXP, lex, Lex(LexType::RSQBEACKET));
+        }
+        chld1 = create_node(Operation::INDEXING, chld1, chld2);
+    }
+    return chld1;
+}
+
+const_node_ptr SynAnalyser::C() {//LPAREN
+    if (lex.type == LexType::LPAREN) {
         const_node_ptr chld1 = create_node(lex);
         next_lex();
         const_node_ptr chld2 = S();
-        if (!(LexType::RPAREN != *lex)) {
-            chld1 = create_node(chld2->get_type(), chld1, chld2, create_node(lex));
+        if (lex.type == LexType::RPAREN) {
+            chld1 = create_node(Operation::PAREN, chld1, chld2, create_node(lex));
             next_lex();
             return chld1;
         } else {
-            throw SynError(Syn_err::UNDEXP, lex, create_lex(LexType::RPAREN));//EXCEPTION
+            throw SynError(Syn_err::UNDEXP, lex, Lex(LexType::RPAREN));
         }
     } else {
-        return C();
+        if (lex.type == LexType::ID || lex.type == LexType::NUM) {
+            return create_node(lex);
+        } else {
+            throw SynError(Syn_err::ID_OR_NUM_EXPECT, lex);
+        }
     }
 }
-
-const_node_ptr  SynAnalyser::C() { // SQBLANCK OR ID
-    const_node_ptr chld1, chld2, chld3;
-    switch (lex->get_type()) {
-        case (LexType::NUM):
-        case (LexType::ID):
-            chld1 = create_node(lex);
-            while (*next_lex() == LexType::LSQBRACKET) {
-                chld2 = create_node(lex);
-                next_lex();
-                chld3 = S();
-                if (*lex == LexType::RSQBEACKET) {
-                    chld2 = create_node(NO_TYPE,chld2, chld3, create_node(lex));
-                } else {
-                    throw SynError(Syn_err::UNDEXP, lex, create_lex(LexType::RSQBEACKET));
-                }
-                chld1 = create_node(TypeDetector::op_check_and_res (Operation::INDEX, chld1, chld2), chld1, chld2);
-            }
-            return chld1;
-    default:
-        throw SynError(Syn_err::ID_OR_NUM_EXPECT, lex);
-    }
-}
-
 
 const_tree SynAnalyser::analyse() {
     const_node_ptr peak = nullptr;
@@ -89,7 +123,7 @@ const_tree SynAnalyser::analyse() {
         peak = S();
     }
     if (!(begin == end)) {
-        throw SynError(Syn_err::EXTRA_LEX, lex); //EXCEPTION
+        throw SynError(Syn_err::EXTRA_LEX, lex);
     }
     return peak;
 }

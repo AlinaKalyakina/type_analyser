@@ -1,48 +1,140 @@
 #include "typedetector.h"
 #include "errors.h"
 
-string TypeDetector::type_of_lex(const_lex_ptr x) {
-    string type = x->get_look();
-    if (x->get_type() == LexType::NUM) {
+string TypeDetector::type_determine(const Lex &lex) {
+    switch(lex.type) {
+    case(LexType::NUM):
         return "ci";
+    case(LexType::ID): {
+        enum class State {H, FUNC, ARR, ARR_IN_FUNC};
+        State curstate = State::H;
+        string look = lex.look;
+        string type;
+        unsigned long i = 0;
+        do {
+            switch(curstate){
+            case(State::H):
+                switch (look[i]) {
+                case 'f':
+                    type += 'f';
+                    curstate = State::FUNC;
+                    break;
+                case 'a':
+                    type += 'a';
+                    curstate = State::ARR;
+                    break;
+                case 'i':
+                case 'j':
+                case 'k':
+                    type += 'i';
+                    break;
+                case 's':
+                case 't':
+                    type += 's';
+                    break;
+                default:
+                    throw SemError(Sem_err::UNTYPED_LEX, lex);
+                }
+                break;
+
+            case(State::ARR):
+                switch (look[i]) {
+                case 'f':
+                    type += 'f';
+                    curstate = State::FUNC;
+                    break;
+                case 'a':
+                    type += 'a';
+                    break;
+                case 'i':
+                case 'j':
+                case 'k':
+                    type += 'i';
+                    break;
+                case 's':
+                case 't':
+                    type += 's';
+                    break;
+                default:
+                    throw SemError(Sem_err::UNTYPED_LEX, lex);
+                }
+                break;
+            case(State::FUNC):
+                switch (look[i]) {
+                case 'a':
+                    type += 'a';
+                    curstate = State::ARR_IN_FUNC;
+                    break;
+                case 'i':
+                case 'j':
+                case 'k':
+                    type += 'i';
+                    break;
+                case 's':
+                case 't':
+                    type += 's';
+                    break;
+                case '\0':
+                    return type;
+                default:
+                    throw SemError(Sem_err::UNTYPED_LEX, lex);
+                }
+                break;
+            case(State::ARR_IN_FUNC):
+                switch (look[i]) {
+                case 'a':
+                    type += 'a';
+                    break;
+                case 'i':
+                case 'j':
+                case 'k':
+                    type += 'i';
+                    curstate = State::FUNC;
+                    break;
+                case 's':
+                case 't':
+                    type += 's';
+                    curstate = State::FUNC;
+                    break;
+                default:
+                    throw SemError(Sem_err::UNTYPED_LEX, lex);
+                }
+            }
+            ++i;
+        } while (i < look.size());
+        if (look[i] == '\0') {
+            return type;
+        }
+        throw;
     }
-    if (delims.count(type[0])) {
+    default:
         return "";
     }
-    for(auto &c : type) {
-        switch (c){
-        case('j'):
-        case('k'):
-            c = 'i';
-            break;
-        case('t'):
-            c = 's';
-        }
-    }
-    return type;
 }
 
-string TypeDetector::op_check_and_res(Operation op_code, const_node_ptr x1, const_node_ptr op, const_node_ptr x2) {
-    switch (op_code) {
-    case (Operation::PLUS):
-    case (Operation::MUL):
-        if (x1->get_type() != "i" && x1->get_type() != "ci") {
-            throw SemError(Sem_err::TYPE_MISMATCH, "i", x1,  op);
-        }
-        if (x2->get_type() != "i" && x2->get_type() != "ci") {
-            throw SemError(Sem_err::TYPE_MISMATCH, "i", x2,  op);
-        }
-        return "i";
-    case (Operation::INDEX):
-        if (x1->get_type()[0] != 'a') {
-            throw SemError(Sem_err::INDEX_NOT_ARRAY, NO_TYPE, x1, op);
-        }
-        if (op->get_children()[1]->get_type() != "i" && op->get_children()[1]->get_type() != "ci") {
-            throw SemError(Sem_err::BAD_TYPE_OF_INDEX, "i", x1, op);
-        }
-        return x1->get_type().erase(0,1);//delete first 'a'
-    }
-}
+
+////типы!!!!
+//string TypeDetector::op_check_and_res(Operation op_code, const_node_ptr x1, const_node_ptr op, const_node_ptr x2) {
+//    switch (op_code) {
+//    case (Operation::PLUS):
+//    case (Operation::MUL):
+//        if (x1->get_type() != "i" && x1->get_type() != "ci") {
+//            throw SemError(Sem_err::TYPE_MISMATCH, "i", x1,  op);
+//        }
+//        if (x2->get_type() != "i" && x2->get_type() != "ci") {
+//            throw SemError(Sem_err::TYPE_MISMATCH, "i", x2,  op);
+//        }
+//        return "i";
+//    case (Operation::INDEX):
+//        if (x1->get_type()[0] != 'a') {
+//            throw SemError(Sem_err::INDEX_NOT_ARRAY, NO_TYPE, x1, op);
+//        }
+//        if (op->get_children()[1]->get_type() != "i" && op->get_children()[1]->get_type() != "ci") {
+//            throw SemError(Sem_err::BAD_TYPE_OF_INDEX, "i", x1, op);
+//        }
+//        return x1->get_type().erase(0,1);//delete first 'a'
+//    }
+//}
 
 string TypeDetector::say_type(string type){
     enum State{H, ARR, ARR_RETURN, ARR_PARAM, FUNC_INIT, FUNC_RETURN, FUNC_PARAM};

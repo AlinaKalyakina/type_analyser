@@ -31,7 +31,7 @@ int main()
         }
     } 
     catch (...) { std::cout << "ERROR!" << std::endl; }
-    LexType type[3] = {LexType::PLUS, LexType::NUM, LexType::ID};
+    /*LexType type[3] = {LexType::PLUS, LexType::NUM, LexType::ID};
     lex_ptr lex;
     for (auto t : type) {
         lex = create_lex(t, std::make_pair<int, int> (0, 0));
@@ -56,5 +56,5 @@ int main()
     } else {
         std::cout << "ERROR" << std::endl;
     }
-    std::cout << "This node has semantic type: " << TypeDetector::say_type(node->get_type()) << std::endl;
+    std::cout << "This node has semantic type: " << TypeDetector::say_type(node->get_type()) << std::endl;*/
 }

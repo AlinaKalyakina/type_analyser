@@ -2,71 +2,71 @@
 #include <iostream>
 #include "analysistree.h"
 #include "typedetector.h"
+#include "synanalys.h"
 
 Error::~Error() {}
 
 string say_pos(pos_type pos) {
     return "line " + std::to_string(pos.first) + ", position " + std::to_string(pos.second);
 }
-//LexError
-std::map<Lex_err, string> LexError::messages {{Lex_err::BADCHR, "Bad char: "}, {Lex_err::BADLEX, "Bad lexem: "}};
 
-LexError::LexError(Lex_err er, const_lex_ptr x): lex(x), code(er) {}
-
-LexError::LexError(Lex_err er, int x, const pos_type &pos): code(er) {
-    lex = std::make_shared<Id_lex>(x, pos);
-}
+LexError::LexError(int x, const pos_type &pos) : c(x), position(pos) {}
 
 string LexError::what() const {
-    return messages.find(code)->second + lex->get_look() + " at " + say_pos(lex->get_pos());
+    return "Bad symbol " + std::string(1, c) + " at " + say_pos(position);
 }
 
 //SynError
-SynError::SynError(Syn_err er, const_lex_ptr found, const_lex_ptr expected): met(found), exp(expected), code(er) {}
+SynError::SynError(Syn_err er, const Lex& found, Lex expected): met(found), exp(expected), code(er) {}
 
 string SynError::what() const {
     string res = "";
     switch (code) {
     case (Syn_err::UNDEXP):
-        res += "Lexem " + exp->get_look() + " was expected at " + say_pos(met->get_pos()) + ", but ";
-        if (met->empty()) {
+        res += "Lexem " + exp.look + " was expected at " + say_pos(met.pos) + ", but ";
+        if (met.type == LexType::EMPTY) {
             res += "nothing";
         } else {
-            res += "lexem " + met->get_look();
+            res += "lexem " + met.look;
         }
         return res += " was found\n";
     case(Syn_err::EXTRA_LEX):
-        return "Extra lexem " + met->get_look() + " was found at " + say_pos(met->get_pos());
+        return "Extra lexem " + met.look + " was found at " + say_pos(met.pos);
      case(Syn_err::ID_OR_NUM_EXPECT):
-        res += "Identificator or number was expected at " + say_pos(met->get_pos());
-        if (met->empty()) {
+        res += "Identificator or number was expected at " + say_pos(met.pos);
+        if (met.type == LexType::EMPTY) {
             return res + ", but nothing was found";
         } else {
-            return res + ", but lexem " + met->get_look() + " was found";
+            return res + ", but lexem " + met.look + " was found";
         }
     }
 }
 
-SemError::SemError(Sem_err er,  string t, const_node_ptr x1, const_node_ptr oper):
-    code(er), exp(x1), op(oper), type(t) {}
+SemError::SemError(Sem_err er, const_node_ptr x1, const_node_ptr oper,  string t):
+    code(er), expression(x1), operation(oper), required_type(t) {}
+
+SemError::SemError(Sem_err err, const Lex& l) : code(err), lex(l) {}
 
 string SemError::what() const {
     const_node_ptr res_node;
     switch (code) {
     case (Sem_err::TYPE_MISMATCH):
-        return "Operator " + op->get_look() + " (" + say_pos(op->get_pos()) + ") requires type " +
-                TypeDetector::say_type(type) + ", but " + exp->get_look() + " (" + say_pos(exp->get_pos()) + ") has type " +
-                TypeDetector::say_type(exp->get_type());
+        return "Operator " + operation->get_look() + " (" + say_pos(operation->get_pos()) +
+                ") requires type " + TypeDetector::say_type(required_type) + ", but " +
+                expression->get_look() + " (" + say_pos(expression->get_pos()) + ") has type " +
+                TypeDetector::say_type(expression->exp_type);
     case (Sem_err::BAD_TYPE_OF_INDEX):
-        res_node = create_node(NO_TYPE, exp, op);
+        res_node = create_node(Operation::NO_OP, expression, operation);
         return "Error in expression " + res_node->get_look()+ " (" + say_pos(res_node->get_pos()) +
-                "). Index must have type " + TypeDetector::say_type(type) +
-                ",but " + op->get_children()[1]->get_look() + " has type "
-                + TypeDetector::say_type(op->get_children()[1]->get_type());
+                "). Index must have type " + TypeDetector::say_type(required_type) +
+                ", but " + operation->children[1]->get_look() + " has type "
+                + TypeDetector::say_type(operation->children[1]->exp_type);
     case(Sem_err::INDEX_NOT_ARRAY):
-        res_node = create_node(NO_TYPE, exp, op);
-        return  "Error in expression " + res_node->get_look() + " (" + say_pos(res_node->get_pos()) +
-                "). Only arrays can be indexed, but " +
-                exp->get_look() + " has type " + TypeDetector::say_type(exp->get_type());
+        res_node = create_node(Operation::NO_OP, expression, operation);
+        return  "Error in expression " + res_node->get_look() + " (" + say_pos(res_node->get_pos())
+                + "). Only arrays can be indexed, but " + expression->get_look() + " has type " +
+                TypeDetector::say_type(expression->exp_type);
+    case(Sem_err::UNTYPED_LEX):
+        return "Untyped lexem " + lex.look + " was found at " + say_pos(lex.pos);
     }
 }

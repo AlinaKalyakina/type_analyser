@@ -5,11 +5,10 @@
 #include <string>
 #include "analysistree.h"
 
-enum class Lex_err{BADCHR, BADLEX};
+enum class Lex_err{BADCHR};
 enum class Syn_err{UNDEXP, EXTRA_LEX, ID_OR_NUM_EXPECT};
-enum class Sem_err{BAD_TYPE_OF_INDEX, TYPE_MISMATCH, INDEX_NOT_ARRAY};
-
-string say_pos(pos_type);
+enum class Sem_err{BAD_TYPE_OF_INDEX, TYPE_MISMATCH,
+                   INDEX_NOT_ARRAY, UNTYPED_LEX};
 
 class Error {
 public:
@@ -20,33 +19,33 @@ public:
 class SemError: public Error
 {
     Sem_err code;
-    const_node_ptr exp;
-    const_node_ptr op;
-    string type;
+    const_node_ptr expression = nullptr;
+    const_node_ptr operation = nullptr;
+    string required_type;
+    Lex lex = Lex();
 public:
-    SemError(Sem_err, string type = "", const_node_ptr expr = nullptr, const_node_ptr oper = nullptr);
+    SemError(Sem_err code, const_node_ptr expression = nullptr, const_node_ptr operation = nullptr, string required_type = NO_TYPE);
+    SemError(Sem_err code, const Lex& lex);
     string what() const;
     ~SemError() {}
 };
 
 class SynError: public Error
 {
-    const_lex_ptr met, exp;
+    Lex met, exp;
     Syn_err code;
 public:
-    SynError(Syn_err, const_lex_ptr found = nullptr,const_lex_ptr expected = nullptr);
+    SynError(Syn_err, const Lex& found, Lex exp = Lex());
     string what() const;
     ~SynError() {}
 };
 
 class LexError: public Error
 {
-    static std::map<Lex_err, string> messages;
-    const_lex_ptr lex;
-    Lex_err code;
+    char c;
+    pos_type position;
 public:
-    LexError(Lex_err code, const_lex_ptr lex);
-    LexError(Lex_err code, int symbol, const pos_type& position);
+    LexError(int symbol, const pos_type& position);
     string what() const;
     ~LexError() {}
 };

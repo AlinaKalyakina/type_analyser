@@ -2,33 +2,31 @@
 #include <iostream>
 #include "typedetector.h"
 
-//NODE
-Node::Node(string t) : type(t) {}
+Node::Node(const Lex& l, string type) : lex(l), exp_type(type) {};
 
-string Node::get_type() const{
-    return type;
-}
-
-Node::~Node() {}
-
-//Inner_node
-Inner_node::Inner_node(string type, const_node_ptr ch1,
-                       const_node_ptr ch2, const_node_ptr ch3) : Node(type){
+Node::Node(string type, const_node_ptr ch1, const_node_ptr ch2,
+           const_node_ptr ch3) : exp_type(type) {
     children[0] = ch1;
     children[1] = ch2;
     children[2] = ch3;
 }
 
-const const_node_ptr* Inner_node::get_children() const {
-    return children;
+pos_type Node::get_pos() const {
+    if (children[0] == nullptr) {
+        return lex.pos;
+    } else {
+        return children[0]->get_pos();
+    }
 }
 
-pos_type Inner_node::get_pos() const {
-    return children[0]->get_pos();
-}
-
-string Inner_node::get_look() const {
+string Node::get_look() const {
     string res = "";
+    if (children[0] == nullptr) {
+        if (lex.type == LexType::MUL || lex.type == LexType::PLUS) {
+            return res += " " + lex.look + " ";
+        }
+        return  res += lex.look;
+    }
     for (int i = 0; i < 3; i++) {
         if (children[i] != nullptr) {
             res += children[i]->get_look();
@@ -39,56 +37,28 @@ string Inner_node::get_look() const {
     return res;
 }
 
-string Inner_node::write_subexpressions() const {
-    string exp = "";
+string Node::write_subexpressions() const {
+    if (children[0] == nullptr) {
+        if (exp_type != "") {
+            std::cout << lex.look << " : " << TypeDetector::say_type(exp_type) << std::endl;
+        }
+        return lex.look;
+    }
+    string look;
     for (int i = 0; i < 3; i++) {
         if (children[i] != nullptr) {
-            exp += children[i]->write_subexpressions();
+            look += children[i]->write_subexpressions();
         } else {
             break;
         }
     }
-    if (this->get_type() != NO_TYPE) {
-        std::cout << exp << " : " <<
-                    TypeDetector::say_type(this->get_type()) << std::endl;
+    if (exp_type != NO_TYPE) {
+        if (look[0] != '(') {
+            std::cout << look << " : " << TypeDetector::say_type(exp_type)
+                  << std::endl;
+        }
     }
-    return exp;
-}
-
-//Leaf
-Leaf::Leaf(const_lex_ptr l) : Node(TypeDetector::type_of_lex(l)) {
-    lex = l;
-}
-
-const const_node_ptr* Leaf::get_children() const{
-    return nullptr;
-}
-
-pos_type Leaf::get_pos() const {
-    return lex->get_pos();
-}
-
-string Leaf::get_look() const {
-    auto type = lex->get_type();
-    if (type == LexType::PLUS || type == LexType::MUL) {
-        return " " + lex->get_look() + " ";
-    }
-    return lex->get_look();
-}
-
-string Leaf::write_subexpressions() const {
-    if (*lex == LexType::ID || *lex == LexType::NUM) {
-        std::cout << this->get_look() << " : " << TypeDetector::say_type(this->get_type()) << std::endl;
-    }
-    return this->get_look();
-}
-
-const_node_ptr create_node(const_lex_ptr lex) {
-    return std::make_shared<Leaf>(lex);
-}
-
-const_node_ptr create_node(const string& type, const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3) {
-    return std::make_shared<Inner_node>(type, ch1, ch2, ch3);
+    return look;
 }
 
 void write_subexpressions(const_node_ptr peak) {
