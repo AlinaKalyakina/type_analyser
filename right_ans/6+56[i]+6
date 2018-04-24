@@ -1,0 +1,2 @@
+
+Error in expression 56[i] (line 1, position 3). Only arrays can be indexed, but 56 has type numeral constant

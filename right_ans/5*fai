@@ -1,0 +1,2 @@
+
+Operator  *  (line 1, position 2) requires type integer, but fai (line 1, position 3) has type function, returning array of integer, with no parameters

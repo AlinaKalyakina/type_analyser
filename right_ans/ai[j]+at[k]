@@ -1,0 +1,2 @@
+
+Operator  +  (line 1, position 6) requires type integer, but at[k] (line 1, position 7) has type string

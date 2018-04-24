@@ -1,0 +1,3 @@
+
+Subexpressions have types: 
+fst : function, returning string, with parameters: string

@@ -1,0 +1,2 @@
+
+Error in expression ai[j][k] (line 1, position 3). Only arrays can be indexed, but ai[j] has type integer

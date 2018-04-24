@@ -1,0 +1,5 @@
+
+Subexpressions have types: 
+i : integer
+j : integer
+i + j : integer

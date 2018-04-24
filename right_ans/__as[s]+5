@@ -1,0 +1,2 @@
+
+Error in expression as[s] (line 1, position 1). Index must have type integer, but s has type string
