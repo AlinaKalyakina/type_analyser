@@ -4,7 +4,7 @@
 #include "errors.h"
 
 //Lex
-Lex::Lex(LexType t, pos_type p) {
+Lex::Lex(LexType t, pos_type p, string l) {
     for (auto i : sign) {
         if (i.second == t) {
             look += i.first;
@@ -12,7 +12,9 @@ Lex::Lex(LexType t, pos_type p) {
         }
     }
     pos = p;
-    type = t;
+    if ((type = t) == LexType::ID || t == LexType::NUM) {
+        look = l;
+    }
 }
 
 //const_Lex_it
@@ -46,6 +48,7 @@ const_Lex_it::const_Lex_it(const_Lex_it&& x) {
     x.curlex = Lex();
     curpos = x.curpos;
     x.curpos = std::make_pair<int, int>(0,0);
+    std::cout << "Constructor worked";
 }
 
 const_Lex_it& const_Lex_it::operator=(const_Lex_it&& x) {

@@ -32,7 +32,7 @@ string SynError::what() const {
         return res += " was found\n";
     case(Syn_err::EXTRA_LEX):
         return "Extra lexem " + met.look + " was found at " + say_pos(met.pos);
-     case(Syn_err::ID_OR_NUM_EXPECT):
+    case(Syn_err::ID_OR_NUM_EXPECT):
         res += "Identificator or number was expected at " + say_pos(met.pos);
         if (met.type == LexType::EMPTY) {
             return res + ", but nothing was found";

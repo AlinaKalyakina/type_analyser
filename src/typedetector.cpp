@@ -6,7 +6,7 @@ string TypeDetector::type_determine(const Lex &lex) {
     case(LexType::NUM):
         return "ci";
     case(LexType::ID): {
-        enum class State {H, FUNC, ARR, ARR_IN_FUNC};
+        enum class State {H, FUNC, ARR, ARR_IN_FUNC, TYPE};
         State curstate = State::H;
         string look = lex.look;
         string type;
@@ -27,10 +27,12 @@ string TypeDetector::type_determine(const Lex &lex) {
                 case 'j':
                 case 'k':
                     type += 'i';
+                    curstate = State::TYPE;
                     break;
                 case 's':
                 case 't':
                     type += 's';
+                    curstate = State::TYPE;
                     break;
                 default:
                     throw SemError(Sem_err::UNTYPED_LEX, lex);
@@ -50,10 +52,12 @@ string TypeDetector::type_determine(const Lex &lex) {
                 case 'j':
                 case 'k':
                     type += 'i';
+                    curstate = State::TYPE;
                     break;
                 case 's':
                 case 't':
                     type += 's';
+                    curstate = State::TYPE;
                     break;
                 default:
                     throw SemError(Sem_err::UNTYPED_LEX, lex);
@@ -99,42 +103,21 @@ string TypeDetector::type_determine(const Lex &lex) {
                 default:
                     throw SemError(Sem_err::UNTYPED_LEX, lex);
                 }
+                break;
+            case(State::TYPE):
+                if (look[i] != '\0') {
+                    throw SemError(Sem_err::UNTYPED_LEX, lex);
+                }
             }
             ++i;
-        } while (i < look.size());
-        if (look[i] == '\0') {
-            return type;
-        }
-        throw;
+        } while (i <= look.size());
+        return type;
     }
     default:
         return "";
     }
 }
 
-
-////типы!!!!
-//string TypeDetector::op_check_and_res(Operation op_code, const_node_ptr x1, const_node_ptr op, const_node_ptr x2) {
-//    switch (op_code) {
-//    case (Operation::PLUS):
-//    case (Operation::MUL):
-//        if (x1->get_type() != "i" && x1->get_type() != "ci") {
-//            throw SemError(Sem_err::TYPE_MISMATCH, "i", x1,  op);
-//        }
-//        if (x2->get_type() != "i" && x2->get_type() != "ci") {
-//            throw SemError(Sem_err::TYPE_MISMATCH, "i", x2,  op);
-//        }
-//        return "i";
-//    case (Operation::INDEX):
-//        if (x1->get_type()[0] != 'a') {
-//            throw SemError(Sem_err::INDEX_NOT_ARRAY, NO_TYPE, x1, op);
-//        }
-//        if (op->get_children()[1]->get_type() != "i" && op->get_children()[1]->get_type() != "ci") {
-//            throw SemError(Sem_err::BAD_TYPE_OF_INDEX, "i", x1, op);
-//        }
-//        return x1->get_type().erase(0,1);//delete first 'a'
-//    }
-//}
 
 string TypeDetector::say_type(string type){
     enum State{H, ARR, ARR_RETURN, ARR_PARAM, FUNC_INIT, FUNC_RETURN, FUNC_PARAM};
@@ -214,7 +197,7 @@ string TypeDetector::say_type(string type){
             if (type[i] == '\0') {
                 return res += "with no parameters";
             } else {
-                res += "parameters: ";
+                res += "with parameters: ";
                 curstate = FUNC_PARAM;
                 continue;
             }

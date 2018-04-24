@@ -5,8 +5,7 @@
 #include "errors.h"
 
 const_node_ptr create_node(const Lex& lex) {
-    string type = TypeDetector::type_determine(lex);
-    return std::make_shared<Node>(lex, type);
+    return std::make_shared<Node>(lex, TypeDetector::type_determine(lex));
 }
 
 const_node_ptr create_node(Operation op, const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3) {

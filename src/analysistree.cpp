@@ -42,6 +42,9 @@ string Node::write_subexpressions() const {
         if (exp_type != "") {
             std::cout << lex.look << " : " << TypeDetector::say_type(exp_type) << std::endl;
         }
+        if (lex.type == LexType::PLUS || lex.type == LexType::MUL) {
+            return " " + lex.look + " ";
+        }
         return lex.look;
     }
     string look;

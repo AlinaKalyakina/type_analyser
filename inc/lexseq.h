@@ -23,10 +23,10 @@ enum Sizes{TAB_SIZE = 4};
 
 struct Lex
 {
-    string look;
+    string look = "";
     LexType type = LexType::EMPTY;
     pos_type pos = std::make_pair<int, int> (-1,-1);
-    Lex(LexType type, pos_type pos = std::make_pair<int, int>(-1, -1));
+    Lex(LexType type, pos_type pos = std::make_pair<int, int>(-1, -1), std::string look = "");
     Lex() {}
 };
 
