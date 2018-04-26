@@ -81,12 +81,13 @@ const_node_ptr SynAnalyser::A() {//MUL
 
 const_node_ptr  SynAnalyser::B() { // ID+SQBRACK
     const_node_ptr chld1 = C();
-    while (next_lex().type == LexType::LSQBRACKET) {
+    while (lex.type == LexType::LSQBRACKET) {
         const_node_ptr chld2 = create_node(lex);
         next_lex();
         const_node_ptr chld3 = S();
         if (lex.type == LexType::RSQBEACKET) {
             chld2 = create_node(Operation::SQBLANC, chld2, chld3, create_node(lex));
+            next_lex();
         } else {
             throw SynError(Syn_err::UNDEXP, lex, Lex(LexType::RSQBEACKET));
         }
@@ -109,7 +110,9 @@ const_node_ptr SynAnalyser::C() {//LPAREN
         }
     } else {
         if (lex.type == LexType::ID || lex.type == LexType::NUM) {
-            return create_node(lex);
+            auto ch1 =  create_node(lex);
+            next_lex();
+            return ch1;
         } else {
             throw SynError(Syn_err::ID_OR_NUM_EXPECT, lex);
         }

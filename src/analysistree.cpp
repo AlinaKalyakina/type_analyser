@@ -56,7 +56,7 @@ string Node::write_subexpressions() const {
         }
     }
     if (exp_type != NO_TYPE) {
-        if (look[0] != '(') {
+        if (look[0] != '(' || look[look.size() - 1] != ')') {
             std::cout << look << " : " << TypeDetector::say_type(exp_type)
                   << std::endl;
         }
