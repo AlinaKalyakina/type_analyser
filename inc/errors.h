@@ -20,11 +20,13 @@ class SemError: public Error
 {
     Sem_err code;
     const_node_ptr expression = nullptr;
-    const_node_ptr operation = nullptr;
     string required_type;
+    Operation operation = Operation::VAR;
+    pos_type pos;
     Lex lex = Lex();
 public:
-    SemError(Sem_err code, const_node_ptr expression = nullptr, const_node_ptr operation = nullptr, string required_type = NO_TYPE);
+    SemError(Sem_err code, Operation operation, 
+             const_node_ptr expression, string required_type = "", pos_type pos = pos_type(0, 0));
     SemError(Sem_err code, const Lex& lex);
     string what() const;
     ~SemError() {}

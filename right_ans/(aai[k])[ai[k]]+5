@@ -1,11 +1,11 @@
 
 Subexpressions have types: 
-aai : array of arrays of integer
-k : integer
-aai[k] : array of integer
-ai : array of integer
-k : integer
-ai[k] : integer
-(aai[k])[ai[k]] : integer
 5 : numeral constant
+k : integer
+ai : array of integer
+ai[k] : integer
+k : integer
+aai : array of arrays of integer
+aai[k] : array of integer
+(aai[k])[ai[k]] : integer
 (aai[k])[ai[k]] + 5 : integer

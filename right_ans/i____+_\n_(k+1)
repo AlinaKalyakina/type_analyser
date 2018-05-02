@@ -1,7 +1,7 @@
 
 Subexpressions have types: 
-i : integer
-k : integer
 1 : numeral constant
+k : integer
 k + 1 : integer
+i : integer
 i + (k + 1) : integer

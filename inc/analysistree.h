@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+enum class Operation{VAR, PAREN, PLUS, MUL, INDEXING};
 const string NO_TYPE = "";
 
 using std::string;
@@ -12,15 +13,18 @@ using std::vector;
 
 class Node {
     Lex lex = Lex();
-public:
+    std::shared_ptr<const Node> children[2] = {nullptr, nullptr};
     string exp_type;
-    std::shared_ptr<const Node> children[3] = {nullptr, nullptr, nullptr};
+    Operation operation = Operation::VAR;
+public:
     Node(const Lex& lex, string type_of_expression = NO_TYPE);
-    Node(string type_of_expression, std::shared_ptr<const Node> child1 = nullptr,
-           std::shared_ptr<const Node> child2 = nullptr, std::shared_ptr<const Node> child3 = nullptr);
+    Node(Operation operation, string type_of_expression, std::shared_ptr<const Node> child1,
+           std::shared_ptr<const Node> child2 = nullptr);
     pos_type get_pos() const;
     string get_look() const;
     string write_subexpressions() const;
+    string get_type() const;
+    const std::shared_ptr<const Node> *get_children() const;
 };
 
 typedef std::shared_ptr<const Node> const_node_ptr;

@@ -3,11 +3,10 @@
 #include "lexseq.h"
 #include "analysistree.h"
 
-enum class Operation{NO_OP, PAREN, PLUS, MUL, SQBLANC, INDEXING};
 
 const_node_ptr create_node(const Lex &lex);
 const_node_ptr create_node(Operation,
-       const_node_ptr ch1, const_node_ptr ch2, const_node_ptr ch3 = nullptr);
+       const_node_ptr ch1, const_node_ptr ch2 = nullptr, pos_type op_pos = pos_type(0, 0));
 
 class SynAnalyser
 {

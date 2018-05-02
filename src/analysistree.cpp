@@ -4,62 +4,64 @@
 
 Node::Node(const Lex& l, string type) : lex(l), exp_type(type) {};
 
-Node::Node(string type, const_node_ptr ch1, const_node_ptr ch2,
-           const_node_ptr ch3) : exp_type(type) {
+Node::Node(Operation operation, string type, const_node_ptr ch1, const_node_ptr ch2) :
+    exp_type(type), operation(operation)  {
     children[0] = ch1;
     children[1] = ch2;
-    children[2] = ch3;
 }
 
 pos_type Node::get_pos() const {
-    if (children[0] == nullptr) {
+    if (operation == Operation::VAR) {
         return lex.pos;
     } else {
         return children[0]->get_pos();
     }
 }
 
+const std::shared_ptr<const Node>* Node::get_children() const{
+    return children;
+}
+
+string Node::get_type() const{
+    return exp_type;
+}
+
 string Node::get_look() const {
-    string res = "";
-    if (children[0] == nullptr) {
-        if (lex.type == LexType::MUL || lex.type == LexType::PLUS) {
-            return res += " " + lex.look + " ";
-        }
-        return  res += lex.look;
+    switch (operation) {
+    case(Operation::VAR) :
+        return lex.look;
+    case(Operation::PAREN) :
+        return "(" + children[0]->get_look() + ")";
+    case(Operation::PLUS) :
+        return children[0]->get_look() + " + " + children[1]->get_look();
+    case(Operation::MUL) :
+        return children[0]->get_look() + " * " + children[1]->get_look();
+    case(Operation::INDEXING) :
+        return children[0]->get_look() + "[" + children[1]->get_look() + "]";
     }
-    for (int i = 0; i < 3; i++) {
-        if (children[i] != nullptr) {
-            res += children[i]->get_look();
-        } else {
-            break;
-        }
-    }
-    return res;
 }
 
 string Node::write_subexpressions() const {
-    if (children[0] == nullptr) {
-        if (exp_type != "") {
-            std::cout << lex.look << " : " << TypeDetector::say_type(exp_type) << std::endl;
-        }
-        if (lex.type == LexType::PLUS || lex.type == LexType::MUL) {
-            return " " + lex.look + " ";
-        }
-        return lex.look;
-    }
     string look;
-    for (int i = 0; i < 3; i++) {
-        if (children[i] != nullptr) {
-            look += children[i]->write_subexpressions();
-        } else {
-            break;
-        }
+    switch (operation) {
+    case(Operation::VAR) :
+        look = lex.look;
+        break;
+    case(Operation::PAREN) :
+        look = "(" + children[0]->write_subexpressions() + ")";
+        break;
+    case(Operation::PLUS) :
+         look = children[0]->write_subexpressions() + " + " + children[1]->write_subexpressions();
+        break;
+    case(Operation::MUL) :
+         look = children[0]->write_subexpressions() + " * " + children[1]->write_subexpressions();
+        break;
+    case(Operation::INDEXING) :
+         look = children[0]->write_subexpressions() + "[" + children[1]->write_subexpressions() + "]";
     }
-    if (exp_type != NO_TYPE) {
-        if (look[0] != '(' || look[look.size() - 1] != ')') {
-            std::cout << look << " : " << TypeDetector::say_type(exp_type)
-                  << std::endl;
-        }
+    if (operation != Operation::PAREN) {
+        std::cout << look << " : " << TypeDetector::say_type(exp_type)
+              << std::endl;
     }
     return look;
 }

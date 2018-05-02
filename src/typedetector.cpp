@@ -4,7 +4,7 @@
 string TypeDetector::type_determine(const Lex &lex) {
     switch(lex.type) {
     case(LexType::NUM):
-        return "ci";
+        return "ci";//const int
     case(LexType::ID): {
         enum class State {H, FUNC, ARR, ARR_IN_FUNC, TYPE};
         State curstate = State::H;
