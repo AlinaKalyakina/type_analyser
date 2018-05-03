@@ -26,7 +26,7 @@ struct Lex
     string look = "";
     LexType type = LexType::EMPTY;
     pos_type pos = std::make_pair<int, int> (-1,-1);
-    Lex(LexType type, pos_type pos = std::make_pair<int, int>(-1, -1), std::string look = "");
+    Lex(LexType t, pos_type p = pos_type(0, 0), string l = "");
     Lex() {}
 };
 

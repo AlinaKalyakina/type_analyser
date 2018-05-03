@@ -78,11 +78,7 @@ const_Lex_it::~const_Lex_it() {
 
 //
 Lex const_Lex_it::operator* () const {
-    if (curstate == State::END) {
-        return Lex(LexType::EMPTY, curpos);
-    } else {
-        return curlex;
-    }
+    return curlex;
 }
 
 void const_Lex_it::gc() {
@@ -125,6 +121,7 @@ const_Lex_it& const_Lex_it::operator++ () {
                     } else {
                         if (c == -1) {
                             curstate = State::END;
+                            curlex.type = LexType::EMPTY;
                             exist_flag = false;
                         } else {
                             if (!spaces.count(c)) {

@@ -17,4 +17,5 @@ diff -q -b -Z -B $RES/${VAR// /_} $RIGHT/${VAR// /_}
 done
 echo -n -e "f" >$TESTS/testmain
 $EXE/testmain.out >$RES/testmain  <$TESTS/testmain
+diff -q -b -Z -B $RES/testmain $RIGHT/testmain
 
